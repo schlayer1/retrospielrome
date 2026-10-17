@@ -61,6 +61,8 @@ export class GameState {
   public role: PlayerRole = 'legionary';
   public playerName = 'Titus Valerius';
   public playTimeSeconds = 0;
+  public malePreviewUrl = '';
+  public femalePreviewUrl = '';
 
   private listeners: Listener[] = [];
 
@@ -647,4 +649,5 @@ export class GameState {
 }
 
 export const gameState = new GameState();
+export const state = gameState;
 export { ITEMS };

@@ -36,37 +36,85 @@ export class CatacombScene extends Phaser.Scene {
     const mapW = 40;
     const mapH = 30;
 
-    // 1. Build dark volcanic tuff-stone underground tilemap
-    const g = this.add.graphics();
-    g.fillStyle(0x111827, 1);
-    g.fillRect(0, 0, mapW * 16, mapH * 16);
+    // 1. Build authentic 16-bit volcanic tuff-stone & mosaic underground texture from catacomb_a2 (Tile_A2)
+    if (!this.textures.exists('rome_catacomb_baked')) {
+      const W = mapW * 16;
+      const H = mapH * 16;
+      const srcCat = this.textures.get('catacomb_a2').getSourceImage() as HTMLImageElement;
+      const tmp = document.createElement('canvas');
+      tmp.width = srcCat.width;
+      tmp.height = srcCat.height;
+      const tctx = tmp.getContext('2d')!;
+      tctx.drawImage(srcCat, 0, 0);
+      const catData = tctx.getImageData(0, 0, srcCat.width, srcCat.height).data;
+      const catW = srcCat.width;
 
-    // Outer walls & carved corridors
-    for (let ty = 0; ty < mapH; ty++) {
-      for (let tx = 0; tx < mapW; tx++) {
-        const inMainHall = tx >= 16 && tx <= 24 && ty >= 7 && ty <= 26;
-        const inLeftCrypt = tx >= 7 && tx <= 16 && ty >= 9 && ty <= 16;
-        const inRightMithraeum = tx >= 24 && tx <= 33 && ty >= 9 && ty <= 16;
+      const sampleCat = (bx: number, by: number, px: number, py: number): [number, number, number] => {
+        const sx = bx * 96 + 24 + (px % 48);
+        const sy = by * 144 + 48 + (py % 48);
+        const i = (sy * catW + sx) * 4;
+        return [catData[i], catData[i + 1], catData[i + 2]];
+      };
 
-        if (inMainHall || inLeftCrypt || inRightMithraeum) {
-          const checker = (tx + ty) % 2 === 0 ? 0x292524 : 0x1c1917;
-          g.fillStyle(checker, 1);
-          g.fillRect(tx * 16, ty * 16, 16, 16);
-          // Subtle mortar border
-          g.fillStyle(0x44403c, 0.35);
-          g.fillRect(tx * 16, ty * 16, 16, 1);
-        } else {
-          // Dark volcanic Roman tuff wall
-          const wallShade = (tx * 7 + ty * 13) % 3 === 0 ? 0x1e1b18 : 0x0c0a09;
-          g.fillStyle(wallShade, 1);
-          g.fillRect(tx * 16, ty * 16, 16, 16);
+      const cTex = this.textures.createCanvas('rome_catacomb_baked', W, H)!;
+      const ctx = cTex.getContext();
+      const outImg = ctx.createImageData(W, H);
+      const out = outImg.data;
+
+      for (let py = 0; py < H; py++) {
+        const ty = py >> 4;
+        for (let px = 0; px < W; px++) {
+          const tx = px >> 4;
+          const bayer = ((px & 1) + ((py & 1) << 1)) / 4 - 0.375;
+          const inMainHall = tx >= 16 && tx <= 24 && ty >= 7 && ty <= 26;
+          const inLeftCrypt = tx >= 7 && tx <= 16 && ty >= 9 && ty <= 16;
+          const inRightMithraeum = tx >= 24 && tx <= 33 && ty >= 9 && ty <= 16;
+          const inCarpet = tx >= 19 && tx <= 21 && ty >= 9 && ty <= 24;
+
+          let rgb: [number, number, number];
+          if (inCarpet) {
+            rgb = sampleCat(4, 2, px, py); // Ornate Roman underground mosaic runner
+          } else if (inLeftCrypt) {
+            rgb = sampleCat(1, 0, px, py); // Warm carved catacomb stone
+          } else if (inRightMithraeum) {
+            rgb = sampleCat(2, 0, px, py); // Legionary Mithraeum flagstone
+          } else if (inMainHall) {
+            rgb = sampleCat(0, 0, px, py); // Ancient Roman volcanic tuff brick floor
+          } else {
+            // Deep volcanic rock wall with subtle dithered stone texture
+            const raw = sampleCat(3, 1, px, py);
+            const shade = bayer > 0 ? 0.42 : 0.36;
+            rgb = [
+              Math.round(raw[0] * shade),
+              Math.round(raw[1] * shade),
+              Math.round(raw[2] * shade),
+            ];
+          }
+
+          const idx = (py * W + px) * 4;
+          out[idx] = rgb[0];
+          out[idx + 1] = rgb[1];
+          out[idx + 2] = rgb[2];
+          out[idx + 3] = 255;
         }
       }
+      ctx.putImageData(outImg, 0, 0);
+      cTex.refresh();
     }
 
-    // Mosaic carpet in center corridor
-    g.fillStyle(0x7f1d1d, 0.65);
-    g.fillRect(19 * 16, 9 * 16, 2 * 16, 16 * 16);
+    this.add.image(0, 0, 'rome_catacomb_baked').setOrigin(0, 0).setDepth(0);
+
+    // Authentic 16-bit Cave Stalagmites & Rock Piles along the outer volcanic walls
+    const caveRocks = [
+      [8, 9], [15, 9], [8, 16], [15, 16],
+      [25, 9], [32, 9], [25, 16], [32, 16],
+      [17, 8], [23, 8], [17, 25], [23, 25],
+    ];
+    caveRocks.forEach(([rx, ry], idx) => {
+      this.add
+        .image(rx * 16, ry * 16, 'cave_tiles', idx % 2 === 0 ? 'stalagmite' : 'rock_pile')
+        .setDepth(ry * 16);
+    });
 
     // 2. Props & Atmospheric Arches, Sarcophagi, and Braziers
     this.add.image(20 * 16, 7 * 16, 'catacomb_arch').setDepth(7 * 16);

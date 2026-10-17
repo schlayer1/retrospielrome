@@ -373,58 +373,181 @@ export class UIScene extends Phaser.Scene {
 
     let selectedGender: PlayerGender = gameState.gender;
     let selectedRole: PlayerRole = gameState.role;
+    let selectedChapter: number = gameState.chapter || 1;
     let enteredName = gameState.playerName;
 
-    const renderStart = () => {
-      this.modalOverlay.innerHTML = `
-        <div class="roman-modal start-screen-modal">
-          <div class="start-banner-top">IMPERIUM ROMANUM • 16-BIT GESCHICHTS-ABENTEUER</div>
-          <h1 class="start-main-title">ALTES ROM</h1>
-          <div class="start-subtitle">Vom Wolfsmythos am Palatin (753 v. Chr.) bis zum Untergang Westroms (476 n. Chr.)</div>
+    const shortChapters: Array<{ ch: number; icon: string; name: string; sub: string }> = [
+      { ch: 1, icon: '🐺', name: 'K1: Wiege der Wölfe', sub: '753 v. Chr. · Gründung' },
+      { ch: 2, icon: '🏛️', name: 'K2: Sturz der Tyrannen', sub: '509 v. Chr. · Republik' },
+      { ch: 3, icon: '🌾', name: 'K3: Mut der Wenigen', sub: '458 v. Chr. · Cincinnatus' },
+      { ch: 4, icon: '🐘', name: 'K4: Schatten Karthagos', sub: '216–202 v. Chr. · Hannibal' },
+      { ch: 5, icon: '⚖️', name: 'K5: Blut der Reformer', sub: '133 v. Chr. · Gracchus' },
+      { ch: 6, icon: '⚔️', name: 'K6: Schrei der Ketten', sub: '73–71 v. Chr. · Spartacus' },
+      { ch: 7, icon: '🎲', name: 'K7: Würfel sind gefallen', sub: '49–44 v. Chr. · Caesar' },
+      { ch: 8, icon: '🕊️', name: 'K8: Friede aus Marmor', sub: '27 v.–14 n. Chr. · Augustus' },
+      { ch: 9, icon: '🏟️', name: 'K9: Herz des Imperiums', sub: '64–80 n. Chr. · Kolosseum' },
+      { ch: 10, icon: '🛡️', name: 'K10: Wacht am Limes', sub: '117 n. Chr. · Trajan' },
+      { ch: 11, icon: '✝️', name: 'K11: Im Zeichen des Lichts', sub: '312–330 n. Chr. · Konstantin' },
+      { ch: 12, icon: '📜', name: 'K12: Letztes Licht Westroms', sub: '476 n. Chr. · Antikes Erbe' },
+    ];
 
-          <div class="start-grid">
-            <div class="start-col">
-              <h3 class="section-heading">1. Wähle deinen Charakter & Namen</h3>
-              <div class="gender-cards">
-                <button class="choice-card ${selectedGender === 'male' ? 'selected' : ''}" data-gender="male">
-                  <div class="choice-sprite-preview">🛡️</div>
-                  <div class="choice-title">Titus Valerius</div>
-                  <div class="choice-sub">Römischer Bürger</div>
-                </button>
-                <button class="choice-card ${selectedGender === 'female' ? 'selected' : ''}" data-gender="female">
-                  <div class="choice-sprite-preview">🏛️</div>
-                  <div class="choice-title">Cornelia Valeria</div>
-                  <div class="choice-sub">Römische Bürgerin</div>
-                </button>
+    const renderStart = () => {
+      const maleImg = gameState.malePreviewUrl || '/assets/gfx/player_roman_male.png';
+      const femaleImg = gameState.femalePreviewUrl || '/assets/gfx/player_roman_female.png';
+
+      this.modalOverlay.innerHTML = `
+        <div class="parchment-start-card">
+          <div class="parchment-start-header">
+            <h2 class="parchment-start-title">🏛️ Imperium Romanum – Vom Hirtendorf zum Weltreich (16-Bit-Lernabenteuer)</h2>
+            <span class="parchment-start-badge">Klasse 5/6 · Altes Rom (753 v. Chr. – 476 n. Chr.)</span>
+          </div>
+
+          <div class="parchment-start-body">
+            <!-- Showcase Hero Banner with 6 Epoch Cards -->
+            <div class="start-hero-banner">
+              <div class="start-hero-title">✨ 12 Kapitel von Romulus & Remus am Palatin bis zum Ende Westroms (476 n. Chr.)</div>
+              <div class="start-hero-sub">
+                Erkunde das Forum Romanum, den Palatin, das Kolosseum, den Seehafen Ostia, das Legionärslager am Limes und die unterirdischen <strong>Katakomben</strong>!
               </div>
-              <div class="name-input-wrap">
-                <label for="player-name-input">Römischer Name (für deine Urkunde):</label>
-                <input id="player-name-input" type="text" maxlength="28" value="${enteredName}" placeholder="z. B. Titus Valerius" />
+              <div class="showcase-strip">
+                <div class="showcase-card">
+                  <img src="/assets/rome/statue_lupa_lion.png" alt="Kapitel 1-2" />
+                  <div class="showcase-era">K1 & K2 · Ursprung</div>
+                  <div class="showcase-caption">Palatin & Republik</div>
+                </div>
+                <div class="showcase-card">
+                  <img src="/assets/rome/roman_galley_ship.png" alt="Kapitel 3-4" />
+                  <div class="showcase-era">K3 & K4 · Aufstieg</div>
+                  <div class="showcase-caption">Cincinnatus & Karthago</div>
+                </div>
+                <div class="showcase-card">
+                  <img src="/assets/rome/curia_senate.png" alt="Kapitel 5-6" />
+                  <div class="showcase-era">K5 & K6 · Bürgerkämpfe</div>
+                  <div class="showcase-caption">Gracchus & Spartacus</div>
+                </div>
+                <div class="showcase-card">
+                  <img src="/assets/rome/triumphal_arch.png" alt="Kapitel 7-8" />
+                  <div class="showcase-era">K7 & K8 · Zeitenwende</div>
+                  <div class="showcase-caption">Caesar & Augustus</div>
+                </div>
+                <div class="showcase-card">
+                  <img src="/assets/rome/colosseum_arena.png" alt="Kapitel 9-10" />
+                  <div class="showcase-era">K9 & K10 · Blütezeit</div>
+                  <div class="showcase-caption">Kolosseum & Limes</div>
+                </div>
+                <div class="showcase-card">
+                  <img src="/assets/rome/basilica_constantine.png" alt="Kapitel 11-12" />
+                  <div class="showcase-era">K11 & K12 · Spätantike</div>
+                  <div class="showcase-caption">Konstantin & 476 n. Chr.</div>
+                </div>
               </div>
             </div>
 
-            <div class="start-col">
-              <h3 class="section-heading">2. Wähle deine Laufbahn (Rollen-Bonus)</h3>
-              <div class="role-cards">
-                ${ROM_ROLES.map(
-                  (r) => `
-                  <button class="role-card ${selectedRole === r.id ? 'selected' : ''}" data-role="${r.id}">
-                    <img src="${r.icon}" class="role-card-icon" alt="${r.name}" />
-                    <div class="role-card-info">
-                      <div class="role-card-title">${r.name} <span class="latin-pill">${r.latinTitle}</span></div>
-                      <div class="role-card-desc">${r.description}</div>
-                      <div class="role-card-bonus">⭐ ${r.bonusText}</div>
+            <!-- 1. Name & 2. Charakter-Figur -->
+            <div class="start-top-row">
+              <div>
+                <label class="parchment-label" for="player-name-input">1. Dein römischer Name:</label>
+                <input
+                  id="player-name-input"
+                  class="parchment-name-input"
+                  type="text"
+                  maxlength="24"
+                  value="${enteredName}"
+                  placeholder="z. B. Titus Valerius"
+                />
+                <div class="parchment-hint">
+                  Wird auf deiner druckbaren Rom-Urkunde und im Hefter-Code gespeichert.
+                </div>
+              </div>
+
+              <div>
+                <label class="parchment-label">2. Charakter-Figur wählen:</label>
+                <div class="parchment-gender-grid">
+                  <button type="button" class="parchment-pick-card ${selectedGender === 'male' ? 'active' : ''}" data-gender="male">
+                    <div class="parchment-avatar-box">
+                      <img src="${maleImg}" alt="Titus Valerius" />
+                    </div>
+                    <div>
+                      <div class="pick-title">Titus Valerius (m)</div>
+                      <div class="pick-sub">Tunika, Toga & Lorbeerkranz</div>
                     </div>
                   </button>
-                `
+                  <button type="button" class="parchment-pick-card ${selectedGender === 'female' ? 'active' : ''}" data-gender="female">
+                    <div class="parchment-avatar-box">
+                      <img src="${femaleImg}" alt="Cornelia Valeria" />
+                    </div>
+                    <div>
+                      <div class="pick-title">Cornelia Valeria (w)</div>
+                      <div class="pick-sub">Stola, Palla & Golddiadem</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Historische Rolle (3 horizontale Karten) -->
+            <div style="margin-bottom:8px;">
+              <label class="parchment-label">3. Deine historische Herkunft & Begabung in Rom:</label>
+              <div class="parchment-role-grid">
+                ${ROM_ROLES.map(
+                  (r) => `
+                  <button type="button" class="parchment-role-card ${selectedRole === r.id ? 'active' : ''}" data-role="${r.id}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                      <span class="role-card-heading">
+                        <img src="${r.icon}" alt="" class="role-inline-icon" />
+                        ${r.name}
+                      </span>
+                      <span class="parchment-role-badge">${r.latinTitle}</span>
+                    </div>
+                    <div class="parchment-role-perk">✨ ${r.bonusText}</div>
+                  </button>
+                `,
                 ).join('')}
+              </div>
+            </div>
+
+            <!-- 4. Direkte 12-Kapitel-Auswahl -->
+            <div style="margin-bottom:8px;">
+              <label class="parchment-label">
+                4. Start-Kapitel wählen (Direkteinstieg für den Unterricht – alle 12 Kapitel wählbar):
+              </label>
+              <div class="parchment-chapter-grid">
+                ${shortChapters
+                  .map(
+                    (c) => `
+                  <button type="button" class="parchment-ch-card ${selectedChapter === c.ch ? 'active' : ''}" data-ch="${c.ch}">
+                    <div class="ch-card-title">${c.icon} ${c.name}</div>
+                    <div class="ch-card-sub">${c.sub}</div>
+                  </button>
+                `,
+                  )
+                  .join('')}
+              </div>
+            </div>
+
+            <!-- 5. Hefter-Kurzcode Leiste -->
+            <div class="parchment-code-bar">
+              <div class="parchment-code-text">
+                <strong>📝 Hefter-Kurzcode vorhanden?</strong> Trage deinen Code aus der letzten Stunde ein (z. B. <code>ROM-TITUS-M-L-K4-Q1-R2</code>):
+              </div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <input
+                  id="start-code-input"
+                  type="text"
+                  placeholder="ROM-..."
+                  class="parchment-code-input"
+                />
+                <button type="button" class="parchment-code-btn" id="start-code-btn">Code laden</button>
               </div>
             </div>
           </div>
 
-          <div class="start-footer">
-            <button id="start-game-btn" class="primary-gold-btn">
-              ⚔️ REISE DURCH 12 KAPITEL STARTEN (753 v. Chr. – 476 n. Chr.)
+          <div class="parchment-start-footer">
+            <div class="parchment-controls-hint">
+              🎮 Steuerung: <strong>WASD / Pfeiltasten</strong> (oder Touch-Joystick) · <strong>[E]</strong> Interagieren · <strong>[I]</strong> Beutel
+            </div>
+            <button type="button" id="start-game-btn" class="parchment-go-btn">
+              🦅 Abenteuer im Alten Rom starten!
             </button>
           </div>
         </div>
@@ -456,14 +579,56 @@ export class UIScene extends Phaser.Scene {
         });
       });
 
+      this.modalOverlay.querySelectorAll('[data-ch]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          sound.click();
+          selectedChapter = parseInt(btn.getAttribute('data-ch') || '1', 10);
+          renderStart();
+        });
+      });
+
+      const codeBtn = this.modalOverlay.querySelector('#start-code-btn');
+      if (codeBtn) {
+        codeBtn.addEventListener('click', () => {
+          const inp = this.modalOverlay.querySelector('#start-code-input') as HTMLInputElement | null;
+          const raw = inp?.value.trim() || '';
+          if (!raw) {
+            this.showToast('Bitte gib einen gültigen Hefter-Code ein (z. B. ROM-K04-LM-007-03).');
+            return;
+          }
+          const ok = gameState.importShortcode(raw);
+          if (ok) {
+            sound.success();
+            sound.startBGM(gameState.chapter);
+            const world = this.scene.get('World') as WorldScene;
+            if (world) {
+              world.refreshCharacterAppearance();
+              world.onChapterChanged();
+            }
+            this.closeModal();
+            this.renderHUD();
+            this.renderQuestTracker();
+            this.showToast(`✅ Spielstand geladen: Kapitel ${gameState.chapter} (${gameState.playerName})`);
+          } else {
+            this.showToast('❌ Ungültiger Hefter-Code. Bitte prüfe die Schreibweise.');
+          }
+        });
+      }
+
       const startBtn = this.modalOverlay.querySelector('#start-game-btn');
       if (startBtn) {
         startBtn.addEventListener('click', () => {
           sound.success();
           gameState.setProfile(selectedGender, selectedRole, enteredName);
+          gameState.setChapter(selectedChapter);
           sound.startBGM(gameState.chapter);
           const world = this.scene.get('World') as WorldScene;
-          if (world) world.refreshCharacterAppearance();
+          if (world) {
+            world.refreshCharacterAppearance();
+            world.onChapterChanged();
+          }
+          this.renderHUD();
+          this.renderQuestTracker();
           this.openChapterIntroDialog();
         });
       }

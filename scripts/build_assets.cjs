@@ -650,77 +650,125 @@ async function main() {
               if (isTunic) {
                 const lum = r;
                 if (def.tunic === 'lorica_armor') {
-                  d[i] = Math.min(255, Math.round(lum * 1.05 + 35));
-                  d[i + 1] = Math.min(255, Math.round(lum * 1.05 + 35));
-                  d[i + 2] = Math.min(255, Math.round(lum * 1.15 + 45));
+                  // Polished Roman steel & bronze Lorica
+                  d[i] = Math.min(255, Math.round(lum * 0.88 + 20));
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.88 + 22));
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.96 + 30));
                 } else if (def.tunic === 'gladiator_bronze' || def.tunic === 'shepherd_hide') {
-                  d[i] = Math.min(255, Math.round(lum * 1.15 + 25));
-                  d[i + 1] = Math.min(255, Math.round(lum * 0.78 + 15));
-                  d[i + 2] = Math.min(255, Math.round(lum * 0.32 + 5));
+                  // Warm bronze / leather harness
+                  d[i] = Math.min(255, Math.round(lum * 0.95));
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.65));
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.35));
                 } else if (def.tunic === 'monk_robe') {
-                  d[i] = Math.min(255, Math.round(lum * 0.7 + 20));
-                  d[i + 1] = Math.min(255, Math.round(lum * 0.5 + 15));
-                  d[i + 2] = Math.min(255, Math.round(lum * 0.35 + 10));
+                  // Warm scholarly brown-ochre robe
+                  d[i] = Math.min(255, Math.round(lum * 0.68));
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.50));
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.34));
+                } else if (def.cloak === 'senate_purple' || def.cloak === 'royal_purple') {
+                  // Senatorial / Imperial cream-white Toga with subtle warm sheen
+                  d[i] = Math.min(255, Math.round(lum * 1.12 + 28));
+                  d[i + 1] = Math.min(255, Math.round(lum * 1.06 + 22));
+                  d[i + 2] = Math.min(255, Math.round(lum * 1.02 + 20));
+                } else if (def.cloak === 'plebeian_blue') {
+                  // Aegean / Plebeian sky-blue Tunica (like Jana in Steinzeit)
+                  d[i] = Math.min(255, Math.round(lum * 0.36));
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.68));
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.98));
+                } else if (def.cloak === 'olive_green') {
+                  // Cincinnatus sage-olive Tunica (like Ota in Steinzeit)
+                  d[i] = Math.min(255, Math.round(lum * 0.48));
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.78));
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.52));
                 } else {
-                  // Crisp Roman Toga / Tunica
-                  d[i] = Math.min(255, Math.round(lum * 1.35 + 48));
-                  d[i + 1] = Math.min(255, Math.round(lum * 1.32 + 44));
-                  d[i + 2] = Math.min(255, Math.round(lum * 1.24 + 36));
+                  // Roman crimson-terracotta Tunica
+                  d[i] = Math.min(255, Math.round(lum * 0.98));
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.38));
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.32));
                 }
               }
 
               if (isPants) {
                 const lum = b;
                 if (def.cloak === 'imperial_crimson') {
-                  d[i] = Math.min(255, Math.round(lum * 1.45 + 40));
-                  d[i + 1] = Math.round(lum * 0.22 + 8);
-                  d[i + 2] = Math.round(lum * 0.22 + 8);
+                  d[i] = Math.min(255, Math.round(lum * 0.95 + 15));
+                  d[i + 1] = Math.round(lum * 0.32 + 5);
+                  d[i + 2] = Math.round(lum * 0.28 + 5);
                 } else if (def.cloak === 'royal_purple' || def.cloak === 'senate_purple') {
-                  d[i] = Math.min(255, Math.round(lum * 1.15 + 35));
-                  d[i + 1] = Math.round(lum * 0.25 + 10);
-                  d[i + 2] = Math.min(255, Math.round(lum * 1.35 + 45));
+                  d[i] = Math.min(255, Math.round(lum * 0.78 + 18));
+                  d[i + 1] = Math.round(lum * 0.32 + 8);
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.95 + 24));
                 } else if (def.cloak === 'plebeian_blue') {
-                  d[i] = Math.round(lum * 0.25 + 10);
-                  d[i + 1] = Math.min(255, Math.round(lum * 0.85 + 30));
-                  d[i + 2] = Math.min(255, Math.round(lum * 1.45 + 45));
+                  d[i] = Math.round(lum * 0.28 + 5);
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.58 + 12));
+                  d[i + 2] = Math.min(255, Math.round(lum * 0.88 + 20));
                 } else {
-                  d[i] = Math.min(255, Math.round(lum * 1.25 + 35));
-                  d[i + 1] = Math.min(255, Math.round(lum * 1.05 + 25));
-                  d[i + 2] = Math.round(lum * 0.45 + 12);
+                  d[i] = Math.min(255, Math.round(lum * 0.65 + 10));
+                  d[i + 1] = Math.min(255, Math.round(lum * 0.52 + 8));
+                  d[i + 2] = Math.round(lum * 0.36 + 5);
                 }
               }
             }
             ctx.putImageData(imgData, 0, 0);
 
+            // Delicate in-silhouette 16-bit pixel accents (matching Steinzeit Ota/Alva/Tarek standard)
             for (let row = 0; row < 4; row++) {
               for (let col = 0; col < 4; col++) {
                 const fx = col * 16;
                 const fy = row * 32;
-                const bob = (col === 1 || col === 3) ? -1 : 0;
 
+                // 1. In-hair Wreath / Diadem / Browband at y = 8 (never protruding above the head outline!)
                 if (def.wreath === 'gold_laurel' || def.wreath === 'gold_diadem') {
-                  ctx.fillStyle = '#fbbf24';
-                  ctx.fillRect(fx + 4, fy + 6 + bob, 8, 1);
-                  ctx.fillStyle = '#f59e0b';
-                  ctx.fillRect(fx + 5, fy + 5 + bob, 2, 1);
-                  ctx.fillRect(fx + 9, fy + 5 + bob, 2, 1);
+                  ctx.fillStyle = '#e5a823';
+                  ctx.fillRect(fx + 5, fy + 8, 6, 1);
+                } else if (def.wreath === 'olive_branch') {
+                  ctx.fillStyle = '#84cc16';
+                  ctx.fillRect(fx + 5, fy + 8, 6, 1);
                 } else if (def.wreath === 'galea_crest') {
-                  ctx.fillStyle = '#dc2626';
-                  ctx.fillRect(fx + 5, fy + 2 + bob, 6, 3);
-                  ctx.fillStyle = '#cbd5e1';
-                  ctx.fillRect(fx + 4, fy + 5 + bob, 8, 2);
+                  ctx.fillStyle = '#cbd5e1'; // Silver Galea browband inside hair
+                  ctx.fillRect(fx + 4, fy + 8, 8, 1);
+                  ctx.fillStyle = '#dc2626'; // Subtle 1px red crest accent at crown y=5
+                  ctx.fillRect(fx + 6, fy + 5, 4, 1);
                 } else if (def.wreath === 'gladiator_helm') {
                   ctx.fillStyle = '#d97706';
-                  ctx.fillRect(fx + 4, fy + 4 + bob, 8, 3);
+                  ctx.fillRect(fx + 4, fy + 8, 8, 1);
+                } else if (def.wreath === 'wolf_pelt') {
+                  ctx.fillStyle = '#8b5a2b';
+                  ctx.fillRect(fx + 4, fy + 8, 8, 1);
                 }
 
-                // Toga Praetexta / Paludamentum shoulder sash
+                // 2. Female Roman Stola Braids (Cornelia & Claudia) on outer sides (x=2, x=12)
+                if (def.hair === 'long_braid') {
+                  ctx.fillStyle = '#5c2e17';
+                  if (row === 0 || row === 2) {
+                    ctx.fillRect(fx + 2, fy + 13, 2, 7);
+                    ctx.fillRect(fx + 12, fy + 13, 2, 7);
+                  } else if (row === 1) {
+                    ctx.fillRect(fx + 2, fy + 13, 2, 7);
+                  } else if (row === 3) {
+                    ctx.fillRect(fx + 12, fy + 13, 2, 7);
+                  }
+                }
+
+                // 3. Delicate Chest / Belt Accents strictly at y = 19..21 (preserving the black chin outline at y=16..18!)
                 if (def.cloak === 'imperial_crimson') {
-                  ctx.fillStyle = '#b91c1c';
-                  ctx.fillRect(fx + 4, fy + 15 + bob, 8, 2);
+                  ctx.fillStyle = '#e5a823'; // Golden Cingulum belt & clasp at y=19..21
+                  if (row === 0) ctx.fillRect(fx + 6, fy + 19, 4, 1);
+                  ctx.fillRect(fx + 5, fy + 21, 6, 1);
                 } else if (def.cloak === 'royal_purple' || def.cloak === 'senate_purple') {
-                  ctx.fillStyle = '#7e22ce';
-                  ctx.fillRect(fx + 4, fy + 15 + bob, 8, 2);
+                  ctx.fillStyle = '#7e22ce'; // Tyrian purple Clavus stripes on torso y=19..21
+                  if (row === 0) {
+                    ctx.fillRect(fx + 5, fy + 19, 2, 3);
+                    ctx.fillRect(fx + 9, fy + 19, 2, 3);
+                  }
+                  ctx.fillStyle = '#e5a823';
+                  if (row === 0) ctx.fillRect(fx + 7, fy + 19, 2, 1);
+                } else if (def.cloak === 'plebeian_blue' || def.cloak === 'olive_green') {
+                  ctx.fillStyle = '#eedb9b'; // Warm woven collar accent at y=19
+                  if (row === 0) ctx.fillRect(fx + 6, fy + 19, 4, 1);
+                } else if (def.cloak === 'gold_sash') {
+                  ctx.fillStyle = '#d4af37';
+                  if (row === 0) ctx.fillRect(fx + 6, fy + 19, 4, 1);
+                  ctx.fillRect(fx + 5, fy + 21, 6, 1);
                 }
               }
             }

@@ -1,161 +1,150 @@
 import Phaser from 'phaser';
 
-interface Critter {
-  sprite: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
-  type: 'butterfly' | 'fish' | 'goat' | 'cow';
-  baseX: number;
-  baseY: number;
+interface GrazingAnimal {
+  sprite: Phaser.GameObjects.Sprite;
+  kind: 'goat' | 'cow';
+  homeX: number;
+  homeY: number;
   vx: number;
   vy: number;
   timer: number;
-  phase: number;
+  state: 'idle' | 'walk';
 }
 
-interface LeafParticle {
-  dot: Phaser.GameObjects.Rectangle;
+interface AmbientFlier {
+  sprite: Phaser.GameObjects.Image;
+  homeX: number;
+  homeY: number;
   vx: number;
   vy: number;
   phase: number;
+  changeTimer: number;
+}
+
+interface SwimmingFish {
+  sprite: Phaser.GameObjects.Image;
+  homeX: number;
+  homeY: number;
+  vx: number;
+  vy: number;
+  timer: number;
 }
 
 export class WildlifeManager {
   private scene: Phaser.Scene;
-  private critters: Critter[] = [];
-  private leaves: LeafParticle[] = [];
+  private animals: GrazingAnimal[] = [];
+  private fliers: AmbientFlier[] = [];
+  private fishes: SwimmingFish[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
 
-  public init(mapW: number, mapH: number) {
-    this.createAnimations();
+  public init(_mapW: number, _mapH: number) {
+    this.animals = [];
+    this.fliers = [];
+    this.fishes = [];
 
-    // 1. Butterflies near Palatine gardens & olive groves
-    const butterflySpots = [
-      { x: 28, y: 38 },
-      { x: 38, y: 44 },
-      { x: 54, y: 34 },
-      { x: 66, y: 26 },
-      { x: 42, y: 24 },
-      { x: 74, y: 38 },
+    // 1. Lebendige Ziegen- & Rinderherden (echte 80x80 Spritesheets mit goat-walk / cow-walk wie in der Steinzeit!)
+    const goatSpawns = [
+      { x: 25 * 16, y: 49 * 16 },
+      { x: 27 * 16, y: 51 * 16 },
+      { x: 24 * 16, y: 52 * 16 },
+      { x: 37 * 16, y: 48 * 16 },
+      { x: 40 * 16, y: 50 * 16 },
+      { x: 29 * 16, y: 36 * 16 },
     ];
-    butterflySpots.forEach((spot) => {
+    for (const sp of goatSpawns) {
       const spr = this.scene.add
-        .image(spot.x * 16, spot.y * 16, 'critter_butterfly')
-        .setDepth(9000);
-      this.critters.push({
+        .sprite(sp.x, sp.y, 'goat', 0)
+        .setScale(0.62)
+        .setDepth(sp.y);
+      spr.play('goat-idle');
+      this.animals.push({
         sprite: spr,
-        type: 'butterfly',
-        baseX: spot.x * 16,
-        baseY: spot.y * 16,
-        vx: (Math.random() - 0.5) * 14,
-        vy: (Math.random() - 0.5) * 14,
-        timer: 1500 + Math.random() * 2000,
-        phase: Math.random() * Math.PI * 2,
-      });
-    });
-
-    // 2. Goats & Cattle grazing on the Palatine / Aventine pasture
-    const goatSpots = [
-      { x: 25, y: 50 },
-      { x: 27, y: 51 },
-    ];
-    goatSpots.forEach((spot) => {
-      const spr = this.scene.add
-        .sprite(spot.x * 16, spot.y * 16, 'animal_goat', 0)
-        .setScale(0.45)
-        .setDepth(spot.y * 16);
-      spr.play('goat_idle');
-      this.critters.push({
-        sprite: spr,
-        type: 'goat',
-        baseX: spot.x * 16,
-        baseY: spot.y * 16,
+        kind: 'goat',
+        homeX: sp.x,
+        homeY: sp.y,
         vx: 0,
         vy: 0,
-        timer: 2000 + Math.random() * 2500,
-        phase: Math.random() * Math.PI * 2,
+        timer: 800 + Math.random() * 1800,
+        state: 'idle',
       });
-    });
+    }
 
-    const cowSpr = this.scene.add
-      .sprite(29 * 16, 49 * 16, 'animal_cow', 0)
-      .setScale(0.45)
-      .setDepth(49 * 16);
-    cowSpr.play('cow_idle');
-    this.critters.push({
-      sprite: cowSpr,
-      type: 'cow',
-      baseX: 29 * 16,
-      baseY: 49 * 16,
-      vx: 0,
-      vy: 0,
-      timer: 2400,
-      phase: 0,
-    });
-
-    // 3. Fish swimming in the Tiber River & Ostia Sea
-    const fishSpots = [
-      { x: 14, y: 42 },
-      { x: 15, y: 52 },
-      { x: 12, y: 62 },
-      { x: 8, y: 58 },
+    const cowSpawns = [
+      { x: 28 * 16, y: 48 * 16 },
+      { x: 34 * 16, y: 55 * 16 },
+      { x: 43 * 16, y: 54 * 16 },
     ];
-    fishSpots.forEach((spot) => {
+    for (const sp of cowSpawns) {
       const spr = this.scene.add
-        .image(spot.x * 16, spot.y * 16, 'critter_fish')
-        .setAlpha(0.75)
-        .setDepth(15);
-      this.critters.push({
+        .sprite(sp.x, sp.y, 'cow', 0)
+        .setScale(0.62)
+        .setDepth(sp.y);
+      spr.play('cow-idle');
+      this.animals.push({
         sprite: spr,
-        type: 'fish',
-        baseX: spot.x * 16,
-        baseY: spot.y * 16,
-        vx: (Math.random() - 0.5) * 8,
-        vy: (Math.random() - 0.5) * 8,
-        timer: 2000 + Math.random() * 2000,
+        kind: 'cow',
+        homeX: sp.x,
+        homeY: sp.y,
+        vx: 0,
+        vy: 0,
+        timer: 1100 + Math.random() * 2000,
+        state: 'idle',
+      });
+    }
+
+    // 2. Flatternde Schmetterlinge über Wiesen, Olivenhainen und Gärten (Steinzeit spawnAmbientFliers-Logik)
+    const butterflyHomes = [
+      [27 * 16, 42 * 16],
+      [33 * 16, 45 * 16],
+      [39 * 16, 48 * 16],
+      [44 * 16, 50 * 16],
+      [31 * 16, 52 * 16],
+      [49 * 16, 35 * 16],
+      [58 * 16, 33 * 16],
+      [66 * 16, 26 * 16],
+      [72 * 16, 42 * 16],
+      [24 * 16, 38 * 16],
+    ];
+    butterflyHomes.forEach(([hx, hy], idx) => {
+      const s = this.scene.add
+        .image(hx, hy, 'butterfly')
+        .setDepth(9000)
+        .setScale(0.95);
+      if (idx % 3 === 1) s.setTint(0x7dd3fc);
+      else if (idx % 3 === 2) s.setTint(0xfda4af);
+      this.fliers.push({
+        sprite: s,
+        homeX: hx,
+        homeY: hy,
+        vx: (Math.random() - 0.5) * 18,
+        vy: (Math.random() - 0.5) * 14,
         phase: Math.random() * Math.PI * 2,
+        changeTimer: 900 + Math.random() * 1400,
       });
     });
 
-    // 4. Drifting Mediterranean golden & olive leaves
-    for (let i = 0; i < 22; i++) {
-      const color = i % 2 === 0 ? 0xd97706 : 0x65a30d;
-      const dot = this.scene.add
-        .rectangle(
-          Math.random() * mapW * 16,
-          Math.random() * mapH * 16,
-          2,
-          2,
-          color,
-          0.65
-        )
-        .setDepth(9200);
-      this.leaves.push({
-        dot,
-        vx: 6 + Math.random() * 6,
-        vy: 3 + Math.random() * 4,
-        phase: Math.random() * Math.PI * 2,
-      });
-    }
-  }
-
-  private createAnimations() {
-    const anims = this.scene.anims;
-    if (!anims.exists('goat_idle')) {
-      anims.create({
-        key: 'goat_idle',
-        frames: anims.generateFrameNumbers('animal_goat', { start: 0, end: 3 }),
-        frameRate: 4,
-        repeat: -1,
-      });
-    }
-    if (!anims.exists('cow_idle')) {
-      anims.create({
-        key: 'cow_idle',
-        frames: anims.generateFrameNumbers('animal_cow', { start: 0, end: 3 }),
-        frameRate: 3,
-        repeat: -1,
+    // 3. Schwimmende Fische im Tiber und im Hafen von Ostia
+    const fishHomes = [
+      { x: 16 * 16, y: 34 * 16 },
+      { x: 15 * 16, y: 46 * 16 },
+      { x: 14 * 16, y: 56 * 16 },
+      { x: 10 * 16, y: 60 * 16 },
+    ];
+    for (const fh of fishHomes) {
+      const spr = this.scene.add
+        .image(fh.x, fh.y, 'critter_fish')
+        .setAlpha(0.75)
+        .setDepth(8);
+      this.fishes.push({
+        sprite: spr,
+        homeX: fh.x,
+        homeY: fh.y,
+        vx: (Math.random() - 0.5) * 12,
+        vy: (Math.random() - 0.5) * 10,
+        timer: 1500 + Math.random() * 1800,
       });
     }
   }
@@ -163,46 +152,71 @@ export class WildlifeManager {
   public update(time: number, delta: number) {
     const dt = delta / 1000;
 
-    for (const c of this.critters) {
-      c.timer -= delta;
-      if (c.timer <= 0) {
-        c.timer = 1800 + Math.random() * 2400;
-        if (c.type === 'butterfly') {
-          c.vx = (Math.random() - 0.5) * 18;
-          c.vy = (Math.random() - 0.5) * 18;
-        } else if (c.type === 'goat' || c.type === 'cow') {
-          if (Math.random() < 0.5) {
-            c.vx = 0;
-            c.vy = 0;
-          } else {
-            c.vx = (Math.random() - 0.5) * 8;
-            c.vy = (Math.random() - 0.5) * 8;
-          }
-        } else if (c.type === 'fish') {
-          c.vx = (Math.random() - 0.5) * 10;
-          c.vy = (Math.random() - 0.5) * 10;
+    // 1. Ziegen & Rinder: echtes Umschalten zwischen Walk- und Idle-Animation + Richtungs-Flip!
+    for (const a of this.animals) {
+      a.timer -= delta;
+      if (a.timer <= 0) {
+        if (a.state === 'walk') {
+          a.state = 'idle';
+          a.vx = 0;
+          a.vy = 0;
+          a.timer = 1800 + Math.random() * 2400;
+          a.sprite.play(a.kind === 'goat' ? 'goat-idle' : 'cow-idle', true);
+        } else {
+          a.state = 'walk';
+          const dx = a.homeX - a.sprite.x;
+          const dy = a.homeY - a.sprite.y;
+          const distHome = Math.hypot(dx, dy);
+          const angle =
+            distHome > 42
+              ? Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.6
+              : Math.random() * Math.PI * 2;
+          const speed = a.kind === 'goat' ? 18 : 13;
+          a.vx = Math.cos(angle) * speed;
+          a.vy = Math.sin(angle) * speed;
+          a.timer = 1100 + Math.random() * 1500;
+          a.sprite.setFlipX(a.vx < 0);
+          a.sprite.play(a.kind === 'goat' ? 'goat-walk' : 'cow-walk', true);
         }
       }
 
-      c.sprite.x += c.vx * dt;
-      c.sprite.y += c.vy * dt;
-
-      const maxDist = c.type === 'butterfly' ? 42 : 20;
-      if (Math.hypot(c.sprite.x - c.baseX, c.sprite.y - c.baseY) > maxDist) {
-        c.vx = (c.baseX - c.sprite.x) * 0.4;
-        c.vy = (c.baseY - c.sprite.y) * 0.4;
-      }
-
-      if (c.type === 'goat' || c.type === 'cow') {
-        c.sprite.setDepth(c.sprite.y);
+      if (a.state === 'walk') {
+        a.sprite.x += a.vx * dt;
+        a.sprite.y += a.vy * dt;
+        a.sprite.setDepth(a.sprite.y);
       }
     }
 
-    for (const l of this.leaves) {
-      l.dot.x += (l.vx + Math.sin(time * 0.002 + l.phase) * 4) * dt;
-      l.dot.y += l.vy * dt;
-      if (l.dot.x > 100 * 16) l.dot.x = 0;
-      if (l.dot.y > 75 * 16) l.dot.y = 0;
+    // 2. Schmetterlinge mit sanftem Flügelschlag (Steinzeit-Standard)
+    for (const f of this.fliers) {
+      f.changeTimer -= delta;
+      if (f.changeTimer <= 0) {
+        f.changeTimer = 900 + Math.random() * 1500;
+        const dx = f.homeX - f.sprite.x;
+        const dy = f.homeY - f.sprite.y;
+        f.vx = (Math.random() - 0.5) * 22 + dx * 0.25;
+        f.vy = (Math.random() - 0.5) * 18 + dy * 0.25;
+      }
+      f.sprite.x += f.vx * dt;
+      f.sprite.y += f.vy * dt + Math.sin(time * 0.008 + f.phase) * 0.14;
+      f.sprite.scaleY = 0.55 + Math.abs(Math.sin(time * 0.018 + f.phase)) * 0.55;
+      f.sprite.setFlipX(f.vx < 0);
+      f.sprite.setDepth(f.sprite.y + 24);
+    }
+
+    // 3. Fische im Tiber
+    for (const fish of this.fishes) {
+      fish.timer -= delta;
+      if (fish.timer <= 0) {
+        fish.timer = 1600 + Math.random() * 1800;
+        const dx = fish.homeX - fish.sprite.x;
+        const dy = fish.homeY - fish.sprite.y;
+        fish.vx = (Math.random() - 0.5) * 14 + dx * 0.2;
+        fish.vy = (Math.random() - 0.5) * 10 + dy * 0.2;
+        fish.sprite.setFlipX(fish.vx < 0);
+      }
+      fish.sprite.x += fish.vx * dt;
+      fish.sprite.y += fish.vy * dt;
     }
   }
 }

@@ -131,10 +131,12 @@ export class TouchControls {
 
     window.addEventListener('resize', () => {
       if (this.container) {
-        this.container.style.display = this.isTouchDevice() ? 'flex' : 'none';
+        this.container.style.display = this.visibleWanted && this.isTouchDevice() ? 'flex' : 'none';
       }
     });
   }
+
+  private visibleWanted = true;
 
   private updateJoystick(clientX: number, clientY: number) {
     if (!this.baseRect || !this.knob) return;
@@ -168,6 +170,7 @@ export class TouchControls {
   }
 
   public setVisible(visible: boolean) {
+    this.visibleWanted = visible;
     if (!this.container) return;
     this.container.style.display = visible && this.isTouchDevice() ? 'flex' : 'none';
   }
