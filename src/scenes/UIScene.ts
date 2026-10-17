@@ -1448,8 +1448,13 @@ export class UIScene extends Phaser.Scene {
 
           <!-- Kachel 3: Audio & Synthesizer -->
           <div class="pause-tile">
-            <h3>3. 🔊 Ton & 16-Bit Musik</h3>
-            <p>Steuere die Hintergrundmusik und die Soundeffekte für das Klassenzimmer:</p>
+            <h3>3. 🔊 Ton & 16-Bit Soundtrack</h3>
+            <p style="margin-bottom:6px;">Aktuell: <strong>${sound.getCurrentTrackDisplay().title}</strong><br/><span style="font-size:0.85em;color:#e2d9c8;">${sound.getCurrentTrackDisplay().subtitle}</span></p>
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0 10px 0;">
+              <span style="font-size:12px;font-weight:700;">Lautstärke:</span>
+              <input type="range" id="pause-volume-slider" min="0" max="100" value="${Math.round(sound.getVolume() * 100)}" style="flex:1;cursor:pointer;" />
+              <span id="pause-volume-label" style="font-size:12px;font-weight:800;min-width:32px;">${Math.round(sound.getVolume() * 100)}%</span>
+            </div>
             <div class="pause-btn-col">
               <button id="toggle-bgm-btn" class="secondary-roman-btn">
                 ${sound.bgmMuted ? '🔇 Musik: AUS (Klicken zum Einschalten)' : '🎵 Musik: AN (Klicken zum Stummschalten)'}
@@ -1543,6 +1548,16 @@ export class UIScene extends Phaser.Scene {
       sound.toggleBGM();
       this.renderPauseModal();
     });
+
+    const volSlider = this.modalOverlay.querySelector('#pause-volume-slider') as HTMLInputElement | null;
+    const volLabel = this.modalOverlay.querySelector('#pause-volume-label');
+    if (volSlider) {
+      volSlider.addEventListener('input', () => {
+        const val = parseInt(volSlider.value, 10);
+        sound.setVolume(val / 100);
+        if (volLabel) volLabel.textContent = `${val}%`;
+      });
+    }
 
     this.modalOverlay.querySelector('#toggle-sfx-btn')?.addEventListener('click', () => {
       sound.muted = !sound.muted;

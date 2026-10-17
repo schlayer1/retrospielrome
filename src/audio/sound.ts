@@ -3,7 +3,21 @@ class SoundSystem {
   public muted = false;
   public bgmMuted = false;
   private bgmAudio: HTMLAudioElement | null = null;
+  private bgmVolume = 0.28;
+  private inCatacombs = false;
   private currentChapter = 1;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      const savedMute = localStorage.getItem('rome_bgm_muted');
+      if (savedMute !== null) this.bgmMuted = savedMute === 'true';
+      const savedVol = localStorage.getItem('rome_bgm_vol');
+      if (savedVol !== null) {
+        const v = parseFloat(savedVol);
+        if (!isNaN(v)) this.bgmVolume = Math.max(0, Math.min(1, v));
+      }
+    }
+  }
 
   private getContext(): AudioContext | null {
     if (this.muted) return null;
@@ -19,24 +33,121 @@ class SoundSystem {
     return this.ctx;
   }
 
+  public getVolume(): number {
+    return this.bgmVolume;
+  }
+
+  public setVolume(val: number): void {
+    this.bgmVolume = Math.max(0, Math.min(1, val));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rome_bgm_vol', String(this.bgmVolume));
+    }
+    if (this.bgmAudio) {
+      this.bgmAudio.volume = this.bgmMuted ? 0 : this.bgmVolume;
+    }
+  }
+
+  public getChapterTrackInfo(chapter = 1): { path: string; title: string; subtitle: string } {
+    const map: Record<number, { path: string; title: string; subtitle: string }> = {
+      1: {
+        path: '/assets/audio/bgm/bgm_warmth.mp3',
+        title: 'Die Wiege am Palatin',
+        subtitle: 'Hirtenidylle & Lupa Romana (753 v. Chr.)',
+      },
+      2: {
+        path: '/assets/audio/bgm/bgm_patterns.mp3',
+        title: 'Der Bürgereid der Republik',
+        subtitle: 'Curia Hostilia & Senat (509 v. Chr.)',
+      },
+      3: {
+        path: '/assets/audio/bgm/bgm_heart.mp3',
+        title: 'Der Geist des Cincinnatus',
+        subtitle: 'Mos Maiorum & Zwölftafeln (458 v. Chr.)',
+      },
+      4: {
+        path: '/assets/audio/bgm/bgm_desert_battle.mp3',
+        title: 'Der Schatten von Karthago',
+        subtitle: 'Cannae, Flotte von Ostia & Zama (216 v. Chr.)',
+      },
+      5: {
+        path: '/assets/audio/bgm/bgm_desert_whispers.mp3',
+        title: 'Das Flüstern der Reformer',
+        subtitle: 'Tiberius Gracchus & Ackerreform (133 v. Chr.)',
+      },
+      6: {
+        path: '/assets/audio/bgm/bgm_desert_epic.mp3',
+        title: 'Der Ruf nach Freiheit',
+        subtitle: 'Spartacus & der Vesuv-Aufstand (73 v. Chr.)',
+      },
+      7: {
+        path: '/assets/audio/bgm/bgm_patterns.mp3',
+        title: 'Alea Iacta Est – Rubikon',
+        subtitle: 'Caesars Triumph & Dictator Perpetuo (49 v. Chr.)',
+      },
+      8: {
+        path: '/assets/audio/bgm/bgm_warmth.mp3',
+        title: 'Pax Romana & Goldene Ära',
+        subtitle: 'Augustus, Marmor & Aquädukte (27 v. Chr.)',
+      },
+      9: {
+        path: '/assets/audio/bgm/bgm_mist.mp3',
+        title: 'Rauch über den Insulae',
+        subtitle: 'Der Brand Roms unter Nero (64 n. Chr.)',
+      },
+      10: {
+        path: '/assets/audio/bgm/bgm_desert_canyon.mp3',
+        title: 'Das Weite Weltreich Trajans',
+        subtitle: 'Größte Ausdehnung, Kolosseum & Limes (117 n. Chr.)',
+      },
+      11: {
+        path: '/assets/audio/bgm/bgm_oracle.mp3',
+        title: 'In Hoc Signo Vinces',
+        subtitle: 'Konstantinische Wende & Basilika (312 n. Chr.)',
+      },
+      12: {
+        path: '/assets/audio/bgm/bgm_mist.mp3',
+        title: 'Der Letzte Kaiser & Vivarium',
+        subtitle: '476 n. Chr. & Rettung des Wissens',
+      },
+    };
+    return map[chapter] || map[1];
+  }
+
+  public getCurrentTrackDisplay(): { title: string; subtitle: string } {
+    if (this.inCatacombs) {
+      return {
+        title: 'Katakomben & Mithräum',
+        subtitle: 'Unterirdische Andacht & Mysterienkult',
+      };
+    }
+    return this.getChapterTrackInfo(this.currentChapter);
+  }
+
   public startBGM(chapter = 1) {
+    this.inCatacombs = false;
     this.currentChapter = chapter;
-    const tracks = [
-      '/assets/audio/bgm/ch1_dunes.ogg',
-      '/assets/audio/bgm/ch2_scorchlight.ogg',
-      '/assets/audio/bgm/ch3_whispers.ogg',
-      '/assets/audio/bgm/ch4_canyon.ogg',
-      '/assets/audio/bgm/ch5_sunblade.ogg',
-      '/assets/audio/bgm/ch6_oasis.ogg',
-      '/assets/audio/bgm/desert_loop.ogg',
-      '/assets/audio/bgm/oasis_loop.ogg',
-    ];
-    const targetSrc = tracks[(chapter - 1) % tracks.length];
+    const track = this.getChapterTrackInfo(chapter);
+    this.playAudioFile(track.path);
+  }
+
+  public playCatacombBGM() {
+    this.inCatacombs = true;
+    this.playAudioFile('/assets/audio/bgm/bgm_oracle.mp3');
+  }
+
+  public resumeChapterBGM() {
+    this.inCatacombs = false;
+    this.startBGM(this.currentChapter);
+  }
+
+  private playAudioFile(targetSrc: string) {
+    if (typeof window === 'undefined') return;
 
     if (this.bgmAudio) {
       if (!this.bgmAudio.src.endsWith(targetSrc)) {
         this.bgmAudio.src = targetSrc;
       }
+      this.bgmAudio.volume = this.bgmMuted || this.muted ? 0 : this.bgmVolume;
       if (!this.bgmMuted && !this.muted) {
         this.bgmAudio.play().catch(() => {});
       }
@@ -45,22 +156,31 @@ class SoundSystem {
 
     this.bgmAudio = new Audio(targetSrc);
     this.bgmAudio.loop = true;
-    this.bgmAudio.volume = 0.22;
+    this.bgmAudio.volume = this.bgmMuted || this.muted ? 0 : this.bgmVolume;
     if (!this.bgmMuted && !this.muted) {
-      this.bgmAudio.play().catch(() => {});
+      const p = this.bgmAudio.play();
+      if (p) p.catch(() => {});
     }
   }
 
   public toggleBGM(): boolean {
     this.bgmMuted = !this.bgmMuted;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rome_bgm_muted', String(this.bgmMuted));
+    }
     if (this.bgmAudio) {
+      this.bgmAudio.volume = this.bgmMuted || this.muted ? 0 : this.bgmVolume;
       if (this.bgmMuted) {
         this.bgmAudio.pause();
       } else if (!this.muted) {
         this.bgmAudio.play().catch(() => {});
       }
     } else if (!this.bgmMuted) {
-      this.startBGM(this.currentChapter);
+      if (this.inCatacombs) {
+        this.playCatacombBGM();
+      } else {
+        this.startBGM(this.currentChapter);
+      }
     }
     return !this.bgmMuted;
   }

@@ -128,6 +128,7 @@ export class WorldScene extends Phaser.Scene {
       this.player.setTexture(tk);
       if (this.labelLayer) this.labelLayer.style.display = 'block';
       this.rebuildChapterEntities();
+      sound.resumeChapterBGM();
     });
 
     this.events.on('sleep', () => {

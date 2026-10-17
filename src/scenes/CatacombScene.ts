@@ -168,6 +168,7 @@ export class CatacombScene extends Phaser.Scene {
       this.player.setTexture(tk);
       this.player.setPosition(20 * 16, 23 * 16);
       if (this.labelLayer) this.labelLayer.style.display = 'block';
+      sound.playCatacombBGM();
     });
 
     this.events.on('sleep', () => {
