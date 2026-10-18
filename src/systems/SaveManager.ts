@@ -19,6 +19,9 @@ export interface SaveData {
   visitedCatacombShrine: boolean;
   visitedMithrasShrine: boolean;
   lexiconRead: string[];
+  unlockedLexicon?: string[];
+  distanceMeters?: number;
+  historicalPoints?: number;
   playerName: string;
   playTimeSeconds: number;
 }

@@ -123,196 +123,374 @@ export const EPOCH_COMPARISON: EpochComparisonRow[] = [
 
 // ============================================================
 // LEXIKON – Exakt 27 Einträge für das Alte Rom (753 v. Chr. – 476 n. Chr.)
+// Progressives Freischalt-System nach SKILL 1.5
 // ============================================================
-export const LEXICON = [
+export interface LexiconEntry {
+  id: string;
+  term: string;
+  category: string;
+  era: string;
+  minChapter: number;
+  unlockHint: string;
+  icon: string;
+  definition: string;
+  merksatz: string;
+  unlockCraftId?: string;
+  unlockRelicId?: string;
+  unlockBuildingId?: string;
+}
+
+export const LEXICON: LexiconEntry[] = [
   {
     id: 'lupa_romana',
     term: 'Lupa Romana (Kapitolinische Wölfin)',
     category: 'Mythos & Gründung',
+    era: 'Frühes Rom & Königszeit',
+    minChapter: 1,
+    unlockHint: 'Sprich zu Beginn von Kapitel 1 mit Romulus (E) oder finde das 1. Relikt.',
+    icon: 'relic_lupa',
+    unlockRelicId: 'relic_lupa',
     definition:
       'Nach dem römischen Gründungsmythos setzte König Amulius die Zwillingsbrüder Romulus und Remus (Söhne des Kriegsgottes Mars) in einem Korb auf dem Tiber aus. Eine Wölfin (lateinisch: lupa) säugte die Kinder in der Lupercal-Höhle am Fuß des Palatin, bevor der Hirte Faustulus sie aufzog. Am 21. April 753 v. Chr. gründete Romulus der Sage nach die Stadt Rom.',
+    merksatz: 'Die Wölfin symbolisiert Roms mythische Herkunft und den göttlichen Schutz des Mars.',
   },
   {
     id: 'pomerium',
     term: 'Pomerium (Heilige Stadtgrenze)',
     category: 'Religion & Stadtbau',
+    era: 'Frühes Rom & Königszeit',
+    minChapter: 1,
+    unlockHint: 'Errichte den Herd der Vesta im Baumenü [B] in Kapitel 1.',
+    icon: 'tuffstein',
+    unlockBuildingId: 'vesta_herd',
     definition:
       'Das Pomerium war die mit einem bronzenen Pflug gezogene, religiös geweihte Grenze der Stadt Rom. Innerhalb des Pomeriums durfte kein Feldherr Waffen tragen oder sein militärisches Kommando (Imperium) ausüben. Als Remus spöttisch über Romulus’ gezogene Grenzfurche sprang, erschlug Romulus ihn mit den Worten: „So soll jeder sterben, der über meine Mauern springt!"',
+    merksatz: 'Das Pomerium trennte die heilige zivile Sphäre der Stadt vom militärischen Außenraum.',
   },
   {
     id: 'res_publica',
     term: 'Res Publica (Römische Republik)',
     category: 'Politik & Staat',
+    era: 'Frühe Republik',
+    minChapter: 2,
+    unlockHint: 'Errichte die Curia Hostilia [B] oder binde Fasces [C] in Kapitel 2.',
+    icon: 'fasces',
+    unlockBuildingId: 'curia_senat',
     definition:
       'Nach dem Sturz des letzten etruskischen Königs Tarquinius Superbus im Jahr 509 v. Chr. gründeten die Römer die „Res Publica" (wörtlich: „die öffentliche Sache"). Alle Bürger schworen den heiligen Eid, niemals wieder einen König (Rex) in Rom zu dulden. Um Machtmissbrauch zu verhindern, wurden alle Staatsämter zeitlich begrenzt (Annuität) und doppelt besetzt (Kollegialität).',
+    merksatz: 'Freiheit durch geteilte Macht: Niemals wieder durfte ein Einzelner über Rom herrschen.',
   },
   {
     id: 'senat',
     term: 'Senat (Ältestenrat & SPQR)',
     category: 'Politik & Staat',
+    era: 'Frühe Republik',
+    minChapter: 2,
+    unlockHint: 'Binde die Fasces der Liktoren [C] in Kapitel 2.',
+    icon: 'toga_candida',
+    unlockCraftId: 'fasces',
     definition:
       'Der Senat (von lat. senex = „der Alte") war das mächtigste politische Gremium der Römischen Republik. In ihm saßen 300 (später 600) ehemalige Beamte auf Lebenszeit, die über Außenpolitik, Krieg und Staatsfinanzen entschieden. Das Hoheitszeichen Roms lautete „S.P.Q.R." – Senatus Populusque Romanus („Senat und Volk von Rom").',
+    merksatz: 'Der Senat war das autoritäre Rückgrat und das Gedächtnis der römischen Republik.',
   },
   {
     id: 'konsul',
     term: 'Konsuln (Annuität & Kollegialität)',
     category: 'Politik & Staat',
+    era: 'Frühe Republik',
+    minChapter: 2,
+    unlockHint: 'Meistere das Kapitel-Quiz mit Brutus in Kapitel 2.',
+    icon: 'fasces',
     definition:
       'An der Spitze der Republik standen zwei Konsuln als höchste Staatsbeamte und Heeresführer. Sie regierten nur für genau ein Jahr (Annuität) und konnten Entscheidungen des jeweils anderen durch ihr Vetorecht blockieren (Kollegialität). Vor ihnen schritten zwölf Amtsdiener (Liktoren) mit Rutenbündeln (Fasces) als Zeichen der Strafgewalt.',
+    merksatz: 'Annuität (1 Jahr) und Kollegialität (zu zweit) schützten vor monarchischer Willkür.',
   },
   {
     id: 'patrizier',
     term: 'Patrizier (Geburtsadel)',
     category: 'Gesellschaft',
+    era: 'Frühe Republik',
+    minChapter: 2,
+    unlockHint: 'Webe eine Toga Candida [C] oder sprich mit Brutus auf dem Forum.',
+    icon: 'toga_candida',
     definition:
       'Die Patrizier (von lat. patres = „Väter") bildeten den alteingesessenen Geburtsadel Roms. Sie führten ihre Familien auf die Gefährten des Romulus zurück, besaßen die größten Ländereien und hielten in der frühen Republik das Monopol auf alle Priesterämter, Konsulate und Sitze im Senat.',
+    merksatz: 'Die Patrizier leiteten ihren Herrschaftsanspruch aus Tradition und großem Landbesitz her.',
   },
   {
     id: 'plebejer',
     term: 'Plebejer & Ständekämpfe',
     category: 'Gesellschaft',
+    era: 'Frühe Republik',
+    minChapter: 3,
+    unlockHint: 'Sprich zu Beginn von Kapitel 3 mit Bauer Cincinnatus [E].',
+    icon: 'hacke',
     definition:
       'Die Plebejer (das „einfache Volk" aus Bauern, Handwerkern und Händlern) stellten zwar die Masse der Soldaten im römischen Heer, waren aber anfangs von allen Staatsämtern ausgeschlossen. Durch den „Auszug auf den Heiligen Berg" (Streik und Verweigerung des Kriegsdienstes) erkämpften sie sich in den Ständekämpfen (ca. 500–287 v. Chr.) politische Gleichberechtigung.',
+    merksatz: 'Durch Kriegsdienstverweigerung erkämpften die Plebejer Volkstribunen und Gesetzesgleichheit.',
   },
   {
     id: 'diktator',
     term: 'Diktator & das Ideal des Cincinnatus',
     category: 'Politik & Militär',
+    era: 'Frühe Republik',
+    minChapter: 3,
+    unlockHint: 'Baue die Legionsschmiede [B] in Kapitel 3.',
+    icon: 'scutum',
+    unlockBuildingId: 'legion_schmiede',
     definition:
       'In höchster militärischer Not konnte der Senat für maximal sechs Monate einen Diktator mit unbeschränkter Befehlsgewalt ernennen. Als leuchtendes Vorbild römischer Bürgertugend galt Lucius Quinctius Cincinnatus (458 v. Chr.): Er wurde direkt hinter seinem Pflug auf dem Acker zum Diktator berufen, rettete das eingeschlossene Heer in 16 Tagen und gab seine Macht sofort wieder ab, um weiterzupflügen.',
+    merksatz: 'Cincinnatus verkörperte Bürgersinn: Unbegrenzte Macht annehmen, retten, und sofort abtreten.',
   },
   {
     id: 'mos_maiorum',
     term: 'Mos Maiorum (Sitte der Vorfahren)',
     category: 'Kultur & Werte',
+    era: 'Frühe Republik',
+    minChapter: 3,
+    unlockHint: 'Webe eine weiße Toga Candida [C] in Kapitel 3.',
+    icon: 'zwoelftafeln',
+    unlockCraftId: 'toga_candida',
     definition:
       'Als „Mos Maiorum" bezeichneten die Römer den ungeschriebenen Wertekanon ihrer Vorfahren. Zu den wichtigsten römischen Kardinaltugenden zählten Virtus (Tapferkeit und Tatkraft), Pietas (Pflichtgefühl gegenüber Göttern, Staat und Familie), Fides (Vertragstreue und Verlässlichkeit) sowie Gravitas (Würde und Ernsthaftigkeit).',
+    merksatz: 'Mos Maiorum band jeden Römer an Frömmigkeit, Vertragstreue und strenge Selbstdisziplin.',
   },
   {
     id: 'zwoelftafelgesetz',
     term: 'Zwölftafelgesetz (450 v. Chr.)',
     category: 'Recht & Gesetz',
+    era: 'Frühe Republik',
+    minChapter: 3,
+    unlockHint: 'Gieße die Zwölftafelgesetze im Handwerk [C] in Kapitel 3.',
+    icon: 'relic_zwoelftafel',
+    unlockCraftId: 'zwoelftafeln',
+    unlockRelicId: 'relic_zwoelftafel',
     definition:
       'Um die Willkür patrizischer Richter zu beenden, wurden 450 v. Chr. erstmals die geltenden Gesetze Roms auf zwölf Bronzetafeln eingemeißelt und auf dem Forum Romanum für jeden lesbar aufgestellt. Es regelte Eigentumsrecht, Schuldenwesen und Strafrecht und legte den Grundstein für das gesamte spätere europäische Rechtssystem.',
+    merksatz: 'Schriftliches Recht schützte Bürger vor Willkür und begründete europäische Rechtskultur.',
   },
   {
     id: 'punische_kriege',
     term: 'Punische Kriege & Hannibal',
     category: 'Militär & Expansion',
+    era: 'Späte Republik',
+    minChapter: 4,
+    unlockHint: 'Baue die Enterbrücke Corvus [C] an der Flottenwerft von Ostia.',
+    icon: 'corvus_enterbruecke',
+    unlockCraftId: 'corvus_enterbruecke',
+    unlockBuildingId: 'ostia_werft',
     definition:
       'In drei gewaltigen Kriegen (264–146 v. Chr.) rang Rom mit der nordafrikanischen Handelsmetropole Karthago (lateinisch: Punier) um die Vorherrschaft im Mittelmeer. Im Zweiten Punischen Krieg überquerte der karthagische Feldherr Hannibal 218 v. Chr. mit Kriegselefanten die Alpen und vernichtete bei Cannae (216 v. Chr.) 50.000 Römer, bevor Scipio Africanus ihn 202 v. Chr. bei Zama besiegte.',
+    merksatz: 'Der Sieg über Karthago machte Rom zur unangefochtenen Seemacht im Mittelmeer.',
   },
   {
     id: 'volkstribun',
     term: 'Volkstribun & Vetorecht',
     category: 'Politik & Staat',
+    era: 'Späte Republik',
+    minChapter: 5,
+    unlockHint: 'Verfasse die Ackergesetz-Rolle [C] in Kapitel 5.',
+    icon: 'ackergesetz_rolle',
+    unlockCraftId: 'ackergesetz_rolle',
     definition:
       'Die Volkstribunen waren die gewählten Schutzbeamten der Plebejer. Ihre Person galt als heilig und unantastbar (sacrosanctus). Mit dem Ruf „Veto!" („Ich verbiete!") konnten sie jeden Gesetzesvorschlag des Senats oder eines Konsuls sofort stoppen, wenn dieser das einfache Volk benachteiligte.',
+    merksatz: 'Das Vetorecht war die wirksamste Waffe des Volkes gegen senatorische Übermacht.',
   },
   {
     id: 'latifundien',
     term: 'Latifundien & die Agrarkrise (Gracchen)',
     category: 'Wirtschaft & Krise',
+    era: 'Späte Republik',
+    minChapter: 5,
+    unlockHint: 'Backe Panis-Rundbrot [C] für das verarmte Stadtvolk.',
+    icon: 'getreide',
+    unlockCraftId: 'panis_brot',
     definition:
       'Während die römischen Kleinbauern jahrelang in Übersee kämpften, verfielen ihre Höfe. Reiche Senatoren kauften das Land sowie das eigentlich dem Staat gehörende Gemeindeland (Ager Publicus) auf und bewirtschafteten riesige Großgüter (Latifundien) mit billigen Kriegssklaven. Als der Volkstribun Tiberius Gracchus 133 v. Chr. Land an verarmte Bauern umverteilen wollte, wurde er von Senatoren erschlagen.',
+    merksatz: 'Die Verarmung der Bauernschaft und Großgrundbesitz zerstörten das soziale Fundament der Republik.',
   },
   {
     id: 'optimaten_popularen',
     term: 'Optimaten und Popularen',
     category: 'Politik & Krise',
+    era: 'Späte Republik',
+    minChapter: 5,
+    unlockHint: 'Schließe das Kapitel-Quiz mit Tiberius Gracchus in Kapitel 5 ab.',
+    icon: 'silber_denar',
     definition:
       'Im letzten Jahrhundert der Republik spaltete sich die römische Politik in zwei verfeindete Lager: Die konservativen „Optimaten" („die Besten", z. B. Sulla, Cato, Cicero) verteidigten die traditionelle Alleinherrschaft des Senats. Die „Popularen" (z. B. die Brüder Gracchus, Marius, Caesar) nutzten hingegen die Volksversammlung und die Volkstribunen, um Gesetze am Senat vorbei durchzusetzen.',
+    merksatz: 'Der Parteienstreit endete in blutigen Bürgerkriegen und dem Zusammenbruch der Republik.',
   },
   {
     id: 'sklaverei',
     term: 'Sklaverei in der Römischen Welt',
     category: 'Gesellschaft & Wirtschaft',
+    era: 'Späte Republik',
+    minChapter: 6,
+    unlockHint: 'Schmiede ein römisches Kurzschwert (Gladius) [C] in Kapitel 6.',
+    icon: 'ziegel',
+    unlockCraftId: 'gladius',
     definition:
       'Sklaven galten im römischen Recht nicht als Personen, sondern als „sprechende Werkzeuge" (instrumentum vocale). Während gebildete griechische Haussklaven oft als Lehrer, Ärzte oder Verwalter arbeiteten und freigelassen werden konnten, vegetierten Feld- und Bergwerkssklaven unter unmenschlichen Bedingungen dahin.',
+    merksatz: 'Die antike Hochkultur basierte ökonomisch auf millionenfacher Ausbeutung Unfreier.',
   },
   {
     id: 'gladiatoren',
     term: 'Gladiatoren & der Spartacus-Aufstand',
     category: 'Gesellschaft & Alltag',
+    era: 'Späte Republik',
+    minChapter: 6,
+    unlockHint: 'Schmiede den Gladiatoren-Dreizack (Fuscina) [C] in Kapitel 6.',
+    icon: 'gladiator_dreizack',
+    unlockCraftId: 'gladiator_dreizack',
     definition:
       'Gladiatoren (von lat. gladius = „Schwert") waren meist Kriegsgefangene oder Sklaven, die in streng bewachten Kampfschulen (Ludi) ausgebildet wurden, um zur Unterhaltung des Publikums in Arenen zu kämpfen. 73 v. Chr. brach der Thraker Spartacus mit 70 Gefährten aus einer Gladiatorenschule in Capua aus und führte ein Befreiungsheer von über 70.000 Sklaven gegen Rom an.',
+    merksatz: 'Spartacus bewies, dass selbst die mächtigste Militärmacht der Welt von Verzweifelten erschüttert werden konnte.',
   },
   {
     id: 'rubikon',
     term: 'Überschreitung des Rubikon (49 v. Chr.)',
     category: 'Politik & Militär',
+    era: 'Späte Republik',
+    minChapter: 7,
+    unlockHint: 'Präge einen römischen Silber-Denar [C] in Kapitel 7.',
+    icon: 'gladius',
+    unlockCraftId: 'silber_denar',
+    unlockRelicId: 'relic_caesar_denar',
     definition:
       'Der kleine Grenzfluss Rubikon trennte die Provinz Oberitalien vom eigentlichen Kernland Italien. Als Gaius Iulius Caesar am 10. Januar 49 v. Chr. mit seiner 13. Legion bewaffnet den Rubikon überschritt, brach er das höchste Gesetz der Republik und eröffnete den Bürgerkrieg mit den berühmten Worten „Alea iacta est" („Der Würfel ist gefallen").',
+    merksatz: 'Mit Caesars Grenzübertritt trat Rom in das Zeitalter der Militärdiktatur ein.',
   },
   {
     id: 'panem_et_circenses',
     term: 'Panem et circenses („Brot und Spiele")',
     category: 'Gesellschaft & Politik',
+    era: 'Kaiserzeit',
+    minChapter: 7,
+    unlockHint: 'Fertige den goldenen Legionsadler (Aquila) [C] in Kapitel 7.',
+    icon: 'panis_brot',
+    unlockCraftId: 'legionsadler',
     definition:
       'Der vom Dichter Juvenal geprägte Begriff beschreibt die Strategie römischer Politiker und Kaiser, die hunderttausenden arbeitslosen Bürger der Hauptstadt durch kostenlose Getreidespenden (Annona) sowie spektakuläre Wagenrennen im Circus Maximus und Gladiatorenkämpfe im Kolosseum bei Laune zu halten und von politischem Protest abzulenken.',
+    merksatz: 'Soziale Ruhigstellung durch Spektakel und Kornspenden ersetzte politische Mitbestimmung.',
   },
   {
     id: 'prinzipat',
     term: 'Prinzipat (Alleinherrschaft des Augustus)',
     category: 'Kaiserzeit',
+    era: 'Kaiserzeit',
+    minChapter: 8,
+    unlockHint: 'Flechte den kaiserlichen Lorbeerkranz [C] in Kapitel 8.',
+    icon: 'lorbeerkranz_rom',
+    unlockCraftId: 'lorbeerkranz_rom',
     definition:
       'Nach dem Ende der Bürgerkriege begründete Caesars Adoptivsohn Octavian unter dem Ehrennamen Augustus („der Erhabene") im Jahr 27 v. Chr. das Prinzipat. Um nicht wie Caesar ermordet zu werden, ließ Augustus die Fassade der Republik (Senat, Konsuln) bestehen, vereinte aber als „Princeps" („Erster Bürger") das Oberkommando über alle Legionen und das Vetorecht der Volkstribunen in seiner Hand.',
+    merksatz: 'Augustus tarnte die Alleinherrschaft genial als angebliche „Wiederherstellung der Republik".',
   },
   {
     id: 'pax_romana',
     term: 'Pax Romana (Der Römische Frieden)',
     category: 'Kaiserzeit',
+    era: 'Kaiserzeit',
+    minChapter: 8,
+    unlockHint: 'Finde die Panzerstatue des Augustus (4. Relikt) nahe der Ara Pacis.',
+    icon: 'relic_augustus_statue',
+    unlockRelicId: 'relic_augustus_statue',
     definition:
       'Als „Pax Romana" (oder Pax Augusta) wird die rund 200-jährige Blütezeit des Römischen Reiches unter Augustus und seinen Nachfolgern (1. und 2. Jh. n. Chr.) bezeichnet. Im Inneren des gewaltigen Mittelmeer-Imperiums herrschten Frieden, sichere Handelswege, eine einheitliche Währung und gleiches Recht – erkauft durch militärische Unterwerfung an den Außengrenzen.',
+    merksatz: '200 Jahre Stabilität ermöglichten antike Globalisierung und wirtschaftliche Blüte.',
   },
   {
     id: 'kaiserkult',
     term: 'Kaiserkult & Vergöttlichung (Divus)',
     category: 'Religion & Kaiserzeit',
+    era: 'Kaiserzeit',
+    minChapter: 8,
+    unlockHint: 'Erreiche Kapitel 8 und sprich mit Kaiser Augustus.',
+    icon: 'relic_caesar_denar',
     definition:
       'Beginnend mit der Erhebung des ermordeten Julius Caesar zum „Divus Iulius" (göttlicher Julius) wurden verstorbene Kaiser durch Senatsbeschluss unter die Staatsgötter aufgenommen. In den östlichen Provinzen wurden auch lebende Kaiser und der Genius des Herrschers in eigenen Tempeln mit Weihrauchopfern als religiöse Loyalitätsbekundung verehrt.',
+    merksatz: 'Der Kaiserkult diente als politisches Bindeglied zur Festigung der kaiserlichen Herrschaft.',
   },
   {
     id: 'aquaedukt',
     term: 'Aquädukte & Römische Ingenieurskunst',
     category: 'Technik & Architektur',
+    era: 'Kaiserzeit',
+    minChapter: 8,
+    unlockHint: 'Errichte das Aquädukt der Kaiserzeit im Baumenü [B] in Kapitel 8.',
+    icon: 'opus_caementicium',
+    unlockBuildingId: 'aqua_romana',
     definition:
       'Römische Ingenieure perfektionierten den Bogenbau und den wasserfesten römischen Beton (Opus Caementicium). Elf riesige Wasserleitungen (Aquädukte) leiteten täglich rund eine Million Kubikmeter frisches Quellwasser mit minimalem Gefälle aus den Bergen in die Brunnen, Latrinen und öffentlichen Badeanlagen (Thermen) der Metropole Rom.',
+    merksatz: 'Bogenarchitektur und Opus Caementicium sicherten die hygienische Versorgung der Millionenstadt.',
   },
   {
     id: 'insulae',
     term: 'Insulae (Römische Mietskasernen)',
     category: 'Gesellschaft & Alltag',
+    era: 'Kaiserzeit',
+    minChapter: 9,
+    unlockHint: 'Fertige eine römische Ton-Öllampe (Lucerna) [C] in Kapitel 9.',
+    icon: 'oellampe',
+    unlockCraftId: 'oellampe',
     definition:
       'Während reiche Senatoren in weitläufigen Stadtvillen (Domus) mit Innenhof lebten, drängten sich über 90 Prozent der Einwohner Roms in mehrstöckigen Mietskasernen (Insulae = „Wohninseln"). Die oberen Stockwerke bestanden aus billigem Fachwerk ohne Wasseranschluss oder Küche, weshalb Einstürze und verheerende Großbrände – wie der Große Brand Roms unter Kaiser Nero 64 n. Chr. – zum Alltag gehörten.',
+    merksatz: 'Enge, feuergefährdete Mietskasernen prägten das prekäre Alltagsleben der einfachen Bevölkerung.',
   },
   {
     id: 'katakomben',
     term: 'Katakomben & Frühes Christentum (Ichthys)',
     category: 'Religion & Spätantike',
+    era: 'Spätantike',
+    minChapter: 9,
+    unlockHint: 'Steige in die Katakomben hinab und besuche den Ichthys-Altar [E].',
+    icon: 'oellampe',
     definition:
       'Da Christen das Opfer vor den Götter- und Kaiserstatuen verweigerten, galten sie den römischen Behörden als illoyale Staatsfeinde und wurden (u. a. unter Kaiser Nero 64 n. Chr. und Diokletian) grausam verfolgt. In den unterirdischen Tuffstein-Gängen vor den Stadtmauern Roms (Katakomben) bestatteten sie ihre Toten und nutzten den Fisch (griech. Ichthys) als geheimes Erkennungszeichen.',
+    merksatz: 'Die Katakomben bezeugen die Standhaftigkeit der Christen vor der Konstantinischen Wende.',
   },
   {
     id: 'limes',
     term: 'Limes, Romanisierung & Mithraskult',
     category: 'Militär & Provinzen',
+    era: 'Kaiserzeit',
+    minChapter: 10,
+    unlockHint: 'Errichte das Kolosseum [B] oder meißle einen Meilenstein [C] in Kapitel 10.',
+    icon: 'meilenstein',
+    unlockCraftId: 'meilenstein',
+    unlockBuildingId: 'kolosseum_bau',
     definition:
       'Unter Kaiser Trajan erreichte das Imperium 117 n. Chr. seine größte Ausdehnung von Schottland bis zum Persischen Golf. Befestigte Grenzen mit Wachtürmen und Kastellen (Limes) sicherten das Reich. In den Provinzen verbreiteten sich lateinische Sprache, Thermen und Stadtrecht (Romanisierung), während die Legionäre in unterirdischen Höhlentempeln (Mithräen) den persischen Lichtgott Mithras verehrten.',
+    merksatz: 'Der Limes war Grenz- und Kontrolllinie, an der Romanisierung und Kulturaustausch blühten.',
   },
   {
     id: 'konstantinische_wende',
     term: 'Konstantinische Wende (312/313 n. Chr.)',
     category: 'Religion & Spätantike',
+    era: 'Spätantike',
+    minChapter: 11,
+    unlockHint: 'Fertige den Chi-Rho-Schild [C] oder baue die Basilika [B] in Kapitel 11.',
+    icon: 'chi_rho_schild',
+    unlockCraftId: 'chi_rho_schild',
+    unlockBuildingId: 'basilika_bau',
+    unlockRelicId: 'relic_konstantin_medaillon',
     definition:
       'Nach seinem Sieg an der Milvischen Brücke 312 n. Chr. unter dem christlichen Zeichen Chi-Rho (☧) gewährte Kaiser Konstantin der Große den Christen 313 n. Chr. in der Mailänder Vereinbarung volle Religionsfreiheit. Er förderte den Bau monumentaler Kirchen (Basiliken) und verlegte 330 n. Chr. die Hauptstadt nach Konstantinopel. 380 n. Chr. wurde das Christentum unter Theodosius I. alleinige Staatsreligion.',
+    merksatz: 'Die Konstantinische Wende machte das Christentum vom Verfolgten zur bestimmenden Weltmacht.',
   },
   {
     id: 'voelkerwanderung',
     term: 'Reichsteilung, Untergang Westroms (476 n. Chr.) & Klosterkultur',
     category: 'Spätantike & Erbe',
+    era: 'Spätantike & Erbe',
+    minChapter: 12,
+    unlockHint: 'Binde den spätantiken Pergament-Codex [C] bei Cassiodor in Kapitel 12.',
+    icon: 'pergament_codex',
+    unlockCraftId: 'pergament_codex',
     definition:
       'Im Jahr 395 n. Chr. wurde das Imperium endgültig in ein Weströmisches und ein Oströmisches Reich geteilt. Durch den Druck der Völkerwanderung (Hunnen, Goten, Vandalen) zerfiel die weströmische Zentralmacht, bis der germanische Heerführer Odoaker 476 n. Chr. den letzten jugendlichen Westkaiser Romulus Augustulus absetzte. Während Ostrom (Byzanz) noch 1.000 Jahre fortbestand, retteten christliche Mönche wie Cassiodor in ihren Schreibstuben (Skriptorien) die Schriften der Antike für Europa.',
+    merksatz: 'Während das weströmische Kaisertum 476 endete, bewahrten Klöster Sprache, Recht und Wissen.',
   },
 ];
 

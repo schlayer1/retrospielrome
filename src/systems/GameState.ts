@@ -1,3 +1,4 @@
+import { LEXICON } from '../data/chapters';
 import { BUILDINGS, ITEMS, RECIPES, RomanItemId, TRADES } from '../data/items';
 import { PlayerGender, PlayerRole, SaveData, SaveManager } from './SaveManager';
 
@@ -52,6 +53,10 @@ export class GameState {
   public quizPerfect = new Set<number>();
   public discoveredRelics = new Set<string>();
   public lexiconRead = new Set<string>();
+  public unlockedLexicon = new Set<string>();
+  public distanceMeters = 0;
+  public compassText = '';
+  public historicalPoints = 0;
   public visitedCatacombShrine = false;
   public visitedMithrasShrine = false;
   public playerX = 34 * 16;
@@ -68,6 +73,7 @@ export class GameState {
 
   constructor() {
     this.load();
+    this.checkLexiconUnlocks();
   }
 
   public onChange(fn: Listener) {
@@ -215,6 +221,38 @@ export class GameState {
       this.lexiconRead.add(termId);
       this.save();
     }
+  }
+
+  public isLexiconUnlocked(termId: string): boolean {
+    return this.unlockedLexicon.has(termId);
+  }
+
+  public checkLexiconUnlocks(): string[] {
+    const newlyUnlocked: string[] = [];
+    for (const entry of LEXICON) {
+      if (this.unlockedLexicon.has(entry.id)) continue;
+      const chOk = entry.minChapter <= this.chapter;
+      const craftOk = entry.unlockCraftId ? this.craftedOnce.has(entry.unlockCraftId as RomanItemId) : false;
+      const relicOk = entry.unlockRelicId ? this.discoveredRelics.has(entry.unlockRelicId) : false;
+      const buildOk = entry.unlockBuildingId ? this.builtBuildings.has(entry.unlockBuildingId) : false;
+
+      if (chOk || craftOk || relicOk || buildOk) {
+        this.unlockedLexicon.add(entry.id);
+        newlyUnlocked.push(entry.id);
+      }
+    }
+    return newlyUnlocked;
+  }
+
+  public addPoints(pts: number) {
+    this.historicalPoints += pts;
+    this.notify();
+  }
+
+  public formatPlayTime(): string {
+    const m = Math.floor(this.playTimeSeconds / 60);
+    const s = this.playTimeSeconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s} Min.`;
   }
 
   public visitCatacombShrine() {
@@ -598,6 +636,9 @@ export class GameState {
       visitedCatacombShrine: this.visitedCatacombShrine,
       visitedMithrasShrine: this.visitedMithrasShrine,
       lexiconRead: Array.from(this.lexiconRead),
+      unlockedLexicon: Array.from(this.unlockedLexicon),
+      distanceMeters: Math.round(this.distanceMeters),
+      historicalPoints: this.historicalPoints,
       playerName: this.playerName,
       playTimeSeconds: this.playTimeSeconds,
     };
@@ -616,6 +657,9 @@ export class GameState {
     this.quizPerfect = new Set(data.quizPerfect || []);
     this.discoveredRelics = new Set(data.discoveredRelics || []);
     this.lexiconRead = new Set(data.lexiconRead || []);
+    this.unlockedLexicon = new Set(data.unlockedLexicon || []);
+    this.distanceMeters = data.distanceMeters || 0;
+    this.historicalPoints = data.historicalPoints || 0;
     this.visitedCatacombShrine = Boolean(data.visitedCatacombShrine);
     this.visitedMithrasShrine = Boolean(data.visitedMithrasShrine);
     this.playerX = data.playerX || 34 * 16;
@@ -625,6 +669,7 @@ export class GameState {
     this.playerName = data.playerName || 'Titus Valerius';
     this.playTimeSeconds = data.playTimeSeconds || 0;
     this.checkQuest();
+    this.checkLexiconUnlocks();
   }
 
   public resetGame() {
@@ -638,12 +683,16 @@ export class GameState {
     this.quizPerfect.clear();
     this.discoveredRelics.clear();
     this.lexiconRead.clear();
+    this.unlockedLexicon.clear();
+    this.distanceMeters = 0;
+    this.historicalPoints = 0;
     this.visitedCatacombShrine = false;
     this.visitedMithrasShrine = false;
     this.playerX = 34 * 16;
     this.playerY = 42 * 16;
     this.questCompleted = false;
     this.playTimeSeconds = 0;
+    this.checkLexiconUnlocks();
     this.notify();
   }
 }

@@ -5,6 +5,9 @@ import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
 import { gameState } from './systems/GameState';
 
+import { artifactInspector } from './ui/ArtifactInspectorModal';
+import { interactiveStations } from './ui/InteractiveStationModal';
+
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
@@ -25,3 +28,5 @@ const game = new Phaser.Game(config);
 // Expose for automated verification & classroom inspection
 (window as unknown as Record<string, unknown>).__ROM_GAME__ = game;
 (window as unknown as Record<string, unknown>).__ROM_STATE__ = gameState;
+(window as unknown as Record<string, unknown>).interactiveStations = interactiveStations;
+(window as unknown as Record<string, unknown>).artifactInspector = artifactInspector;

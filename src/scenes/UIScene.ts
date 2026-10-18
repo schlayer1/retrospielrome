@@ -39,6 +39,7 @@ export class UIScene extends Phaser.Scene {
   private craftCategoryFilter: 'all' | 'economy' | 'republic' | 'empire' = 'all';
   private lexiconSearch = '';
   private lexiconCategory = 'Alle';
+  private selectedLexiconId = 'lupa_romana';
   private questCollapsed = false;
 
   // Dialog & Quiz state
@@ -61,7 +62,16 @@ export class UIScene extends Phaser.Scene {
     this.touchControls = new TouchControls((key) => this.handleShortcutKey(key));
     this.registerKeyboardShortcuts();
 
+    gameState.checkLexiconUnlocks();
+
     gameState.onChange(() => {
+      const newly = gameState.checkLexiconUnlocks();
+      for (const id of newly) {
+        const item = LEXICON.find((e) => e.id === id);
+        if (item) {
+          this.showToast(`📖 Neu im Lexikon: ${item.term}`);
+        }
+      }
       this.renderHUD();
       this.renderQuestTracker();
     });
@@ -80,6 +90,13 @@ export class UIScene extends Phaser.Scene {
     this.renderHUD();
     this.renderQuestTracker();
     this.openStartScreen();
+  }
+
+  update() {
+    const comp = document.getElementById('hud-compass');
+    if (comp && comp.textContent !== gameState.compassText) {
+      comp.textContent = gameState.compassText;
+    }
   }
 
   public isModalOpen(): boolean {
@@ -207,7 +224,10 @@ export class UIScene extends Phaser.Scene {
     this.modalOverlay.style.display = 'none';
     this.modalOverlay.innerHTML = '';
     const world = this.scene.get('World') as WorldScene;
-    if (world) world.refreshMentorMarker();
+    if (world) {
+      world.resetDialogFocus();
+      world.refreshMentorMarker();
+    }
     this.renderHUD();
     this.renderQuestTracker();
   }
@@ -332,6 +352,8 @@ export class UIScene extends Phaser.Scene {
               )
               .join('')}
           </div>
+          <div class="hud-compass-divider"></div>
+          <div id="hud-compass" class="hud-compass-line">${gameState.compassText}</div>
           <div class="quest-status-banner ${allDone ? 'ready' : ''}">
             ${
               allDone
@@ -656,6 +678,8 @@ export class UIScene extends Phaser.Scene {
     this.dialogRole = `${ch.mentorRole} • KAPITEL ${ch.id}: ${cleanTitle(ch.title)} (${ch.year})`;
     this.dialogPortrait = `/assets/gfx/npcs/${ch.mentorId}.png`;
     this.activeModal = 'dialog';
+    const world = this.scene.get('World') as WorldScene;
+    if (world) world.focusOnDialog();
     this.renderActiveModal();
   }
 
@@ -666,6 +690,8 @@ export class UIScene extends Phaser.Scene {
     this.dialogRole = role;
     this.dialogPortrait = '';
     this.activeModal = 'dialog';
+    const world = this.scene.get('World') as WorldScene;
+    if (world) world.focusOnDialog();
     this.renderActiveModal();
   }
 
@@ -738,6 +764,8 @@ export class UIScene extends Phaser.Scene {
     this.quizAnswered = false;
     this.quizSelectedOption = null;
     this.activeModal = 'quiz';
+    const world = this.scene.get('World') as WorldScene;
+    if (world) world.focusOnDialog();
     this.renderActiveModal();
   }
 
@@ -1369,10 +1397,19 @@ export class UIScene extends Phaser.Scene {
       return true;
     });
 
+    const activeEntry =
+      filtered.find((e) => e.id === this.selectedLexiconId) ||
+      filtered[0] ||
+      LEXICON[0];
+    const isUnlocked = gameState.isLexiconUnlocked(activeEntry.id);
+    if (isUnlocked) {
+      gameState.markLexiconRead(activeEntry.id);
+    }
+
     this.modalOverlay.innerHTML = `
-      <div class="roman-modal wide-modal">
+      <div class="roman-modal wide-modal lex-modal-container">
         <div class="modal-top-bar">
-          <h2>📖 Lexikon des Alten Rom (${LEXICON.length} Fachbegriffe) [L]</h2>
+          <h2>📖 Lexikon des Alten Rom (${gameState.unlockedLexicon.size} / 27 entdeckt) [L]</h2>
           <button class="close-x-btn" id="modal-close-btn">✕</button>
         </div>
 
@@ -1389,20 +1426,57 @@ export class UIScene extends Phaser.Scene {
           </div>
         </div>
 
-        <div class="lexicon-list">
-          ${filtered
-            .map(
-              (entry) => `
-            <div class="lexicon-card">
-              <div class="lexicon-card-head">
-                <span class="lexicon-term">${entry.term}</span>
-                <span class="lexicon-cat-badge">${entry.category}</span>
+        <div class="lex-layout">
+          <!-- Linke Liste aller 27 Einträge -->
+          <div class="lex-list">
+            ${filtered
+              .map((entry) => {
+                const unlocked = gameState.isLexiconUnlocked(entry.id);
+                const isSelected = entry.id === activeEntry.id;
+                return `
+                  <button class="lex-list-item ${unlocked ? '' : 'locked'} ${isSelected ? 'selected' : ''}" data-lexitem="${entry.id}">
+                    <span class="lex-item-icon">${unlocked ? '📜' : '🔒'}</span>
+                    <span class="lex-item-title">${entry.term}</span>
+                  </button>
+                `;
+              })
+              .join('')}
+          </div>
+
+          <!-- Rechte Detail-Karte -->
+          <div class="lex-detail-card">
+            ${
+              isUnlocked
+                ? `
+              <div class="lex-detail-header">
+                <div class="lex-detail-icon">🏛️</div>
+                <div class="lex-detail-meta">
+                  <span class="lex-era-tag">${activeEntry.era}</span>
+                  <h3 class="lex-detail-title">${activeEntry.term}</h3>
+                  <span class="lex-cat-pill">${activeEntry.category}</span>
+                </div>
               </div>
-              <p class="lexicon-def">${entry.definition}</p>
-            </div>
-          `
-            )
-            .join('')}
+              <div class="lex-detail-body">
+                <p class="lex-detail-text">${this.formatHighlightedText(activeEntry.definition)}</p>
+                <div class="lex-merksatz-box">
+                  <strong>📌 Geschichts-Merksatz:</strong> ${activeEntry.merksatz}
+                </div>
+                <button id="btn-lex-tts" class="secondary-roman-btn" style="margin-top:14px;">🔊 Eintrag vorlesen</button>
+              </div>
+            `
+                : `
+              <div class="lex-detail-locked-state">
+                <div class="lex-locked-big-icon">🔒</div>
+                <h3 class="lex-detail-title">${activeEntry.term} <span style="font-size:12px;color:#94a3b8;font-weight:normal;">(Noch nicht entdeckt)</span></h3>
+                <span class="lex-cat-pill">${activeEntry.category}</span>
+                <div class="lex-hint-box">
+                  <div class="lex-hint-title">💡 Such-Tipp – Wie schalte ich diesen Eintrag frei?</div>
+                  <p class="lex-hint-text">${activeEntry.unlockHint}</p>
+                </div>
+              </div>
+            `
+            }
+          </div>
         </div>
       </div>
     `;
@@ -1435,6 +1509,28 @@ export class UIScene extends Phaser.Scene {
         this.renderLexiconModal();
       });
     });
+
+    this.modalOverlay.querySelectorAll('[data-lexitem]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        sound.click();
+        this.selectedLexiconId = btn.getAttribute('data-lexitem') || activeEntry.id;
+        this.renderLexiconModal();
+      });
+    });
+
+    const ttsBtn = this.modalOverlay.querySelector('#btn-lex-tts');
+    if (ttsBtn && 'speechSynthesis' in window) {
+      ttsBtn.addEventListener('click', () => {
+        sound.click();
+        window.speechSynthesis.cancel();
+        const text = `${activeEntry.term}. ${activeEntry.definition} Merksatz: ${activeEntry.merksatz}`;
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'de-DE';
+        utter.rate = 0.95;
+        window.speechSynthesis.speak(utter);
+        this.showToast('🔊 Lese Lexikoneintrag vor...');
+      });
+    }
   }
 
   // 6. EPOCH & PHASE COMPARISON MODAL (5 Dimensions across Roman History) [Z]
@@ -1576,19 +1672,24 @@ export class UIScene extends Phaser.Scene {
   private renderPauseModal() {
     this.modalOverlay.style.display = 'flex';
     const shortcode = gameState.exportShortcode();
+    const rankInfo = gameState.getCertificateRank();
+    const distText =
+      gameState.distanceMeters >= 1000
+        ? (gameState.distanceMeters / 1000).toFixed(2) + ' km'
+        : Math.round(gameState.distanceMeters) + ' m';
 
     this.modalOverlay.innerHTML = `
       <div class="roman-modal wide-modal">
         <div class="modal-top-bar">
-          <h2>⚙️ Pause-Dashboard & Klassenraum-Verwaltung [P]</h2>
+          <h2>⚙️ Pause-Dashboard & Chronisten-Zentrale [P]</h2>
           <button class="close-x-btn" id="modal-close-btn">✕</button>
         </div>
 
         <div class="pause-dashboard-grid">
-          <!-- Kachel 1: Spielstand-Kurzcode -->
+          <!-- Kachel 1: Hefter-Code (Schulheft-Speicherstand) -->
           <div class="pause-tile">
-            <h3>1. 🔑 Schul-Kurzcode (Export / Import)</h3>
-            <p>Notiere diesen Code im Heft oder gib einen Code ein, um an jedem Schulgerät weiterzuspielen:</p>
+            <h3>1. 🔑 Hefter-Code (Speicherstand)</h3>
+            <p>Notiere diesen Code im Geschichtsheft, um die Stunde an jedem Schulgerät fortzusetzen:</p>
             <div class="shortcode-display">${shortcode}</div>
             <div class="shortcode-input-row">
               <input id="import-code-input" type="text" placeholder="ROM-K08-LM-0FF-1F" />
@@ -1596,82 +1697,97 @@ export class UIScene extends Phaser.Scene {
             </div>
           </div>
 
-          <!-- Kachel 2: Kapitel-Schnellwahl (1–12) -->
+          <!-- Kachel 2: Chronisten-Rang & Epochenpunkte -->
           <div class="pause-tile">
-            <h3>2. 🗺️ Kapitel-Schnellwahl (753 v. Chr. – 476 n. Chr.)</h3>
-            <p>Springe für den Unterricht direkt in eines der 12 historischen Kapitel:</p>
-            <div class="pause-chapter-grid">
-              ${CHAPTERS.map(
-                (c) => `
-                <button class="pause-ch-btn ${c.id === gameState.chapter ? 'active' : ''}" data-jumpch="${c.id}">
-                  <strong>K${c.id}</strong> (${c.year})
-                </button>
-              `
-              ).join('')}
-            </div>
+            <h3>2. 🏆 Chronisten-Rang & Punkte</h3>
+            <div style="font-size:16px;font-weight:900;color:${rankInfo.color};margin:4px 0;">${rankInfo.rank} – ${rankInfo.title}</div>
+            <div style="font-size:14px;font-weight:800;color:#fbbf24;margin-bottom:6px;">${gameState.historicalPoints} Wissenspunkte</div>
+            <p style="font-size:11.5px;color:#d6d3d1;">Punkte erhältst du für Quizze, geborgene Relikte & gemeisterte Lernstationen.</p>
           </div>
 
-          <!-- Kachel 3: Audio & Synthesizer -->
+          <!-- Kachel 3: Musik- & Audiokulisse -->
           <div class="pause-tile">
-            <h3>3. 🔊 Ton & 16-Bit Soundtrack</h3>
-            <p style="margin-bottom:6px;">Aktuell: <strong>${sound.getCurrentTrackDisplay().title}</strong><br/><span style="font-size:0.85em;color:#e2d9c8;">${sound.getCurrentTrackDisplay().subtitle}</span></p>
-            <div style="display:flex;align-items:center;gap:8px;margin:6px 0 10px 0;">
+            <h3>3. 🔊 Musik & Audiokulisse</h3>
+            <p style="margin-bottom:4px;">Aktuell: <strong>${sound.getCurrentTrackDisplay().title}</strong><br/><span style="font-size:0.85em;color:#e2d9c8;">${sound.getCurrentTrackDisplay().subtitle}</span></p>
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0 8px 0;">
               <span style="font-size:12px;font-weight:700;">Lautstärke:</span>
               <input type="range" id="pause-volume-slider" min="0" max="100" value="${Math.round(sound.getVolume() * 100)}" style="flex:1;cursor:pointer;" />
               <span id="pause-volume-label" style="font-size:12px;font-weight:800;min-width:32px;">${Math.round(sound.getVolume() * 100)}%</span>
             </div>
             <div class="pause-btn-col">
               <button id="toggle-bgm-btn" class="secondary-roman-btn">
-                ${sound.bgmMuted ? '🔇 Musik: AUS (Klicken zum Einschalten)' : '🎵 Musik: AN (Klicken zum Stummschalten)'}
+                ${sound.bgmMuted ? '🔇 Musik: AUS' : '🎵 Musik: AN'}
               </button>
               <button id="toggle-sfx-btn" class="secondary-roman-btn">
-                ${sound.muted ? '🔕 Soundeffekte: AUS' : '🔔 Soundeffekte: AN'}
+                ${sound.muted ? '🔕 SFX: AUS' : '🔔 SFX: AN'}
               </button>
             </div>
           </div>
 
-          <!-- Kachel 4: Charakter & Laufbahn anpassen -->
+          <!-- Kachel 4: Archäologische Leitfunde / Relikte -->
           <div class="pause-tile">
-            <h3>4. 🛡️ Charakter & Laufbahn wechseln</h3>
-            <p>Aktuell: <strong>${gameState.playerName}</strong> (${gameState.getRoleDef().name})</p>
-            <div class="pause-btn-col">
-              <button id="switch-gender-btn" class="secondary-roman-btn">
-                👤 Figur wechseln (${gameState.gender === 'male' ? 'Titus ➔ Cornelia' : 'Cornelia ➔ Titus'})
-              </button>
-              <button id="cycle-role-btn" class="secondary-roman-btn">
-                ⭐ Rolle wechseln (${gameState.getRoleDef().name})
-              </button>
-            </div>
+            <h3>4. 🏺 Archäologische Relikte</h3>
+            <p>Geborgene Relikte: <strong>${gameState.discoveredRelics.size} von 5 Relikten</strong></p>
+            <div style="margin:4px 0 8px 0;font-size:11.5px;color:#e2d9c8;">Lupa, Scutum, Fasces, Konstantin-Medaillon & Chi-Rho-Schild.</div>
+            <button id="pause-open-cert-btn" class="secondary-roman-btn" style="width:100%;">📜 Urkunde & Relikte [U]</button>
           </div>
 
-          <!-- Kachel 5: Steuerungs-Übersicht -->
+          <!-- Kachel 5: Historisches Fachlexikon -->
           <div class="pause-tile">
-            <h3>5. 🎮 Steuerung (Tastatur & Touch)</h3>
+            <h3>5. 📖 Historisches Fachlexikon</h3>
+            <p>Entdeckt: <strong>${gameState.unlockedLexicon.size} von 27 Begriffen</strong></p>
+            <div style="margin:4px 0 8px 0;font-size:11.5px;color:#e2d9c8;">Entdecke Begriffe durch Kapitel, Werkstatt, Monumente & Fundorte.</div>
+            <button id="pause-open-lex-btn" class="secondary-roman-btn" style="width:100%;">📖 Lexikon öffnen [L]</button>
+          </div>
+
+          <!-- Kachel 6: Bauvorhaben & Infrastruktur -->
+          <div class="pause-tile">
+            <h3>6. 🏛️ Monumente & Bauvorhaben</h3>
+            <p>Errichtet: <strong>${gameState.builtBuildings.size} von 7 Monumenten</strong></p>
+            <div style="margin:4px 0 8px 0;font-size:11.5px;color:#e2d9c8;">Vesta-Herd, Curia, Schmiede, Ostia-Werft, Aquädukt, Kolosseum, Basilika.</div>
+            <button id="pause-open-build-btn" class="secondary-roman-btn" style="width:100%;">🏛️ Bauübersicht [B]</button>
+          </div>
+
+          <!-- Kachel 7: Live-Statistiken (Erkundungsfortschritt) -->
+          <div class="pause-tile">
+            <h3>7. 📊 Live-Statistiken</h3>
             <ul class="controls-list">
-              <li><strong>WASD / Pfeiltasten / Joystick:</strong> Bewegen</li>
-              <li><strong>[E]</strong> Interagieren, Sammeln, Sprechen & Katakomben</li>
-              <li><strong>[C]</strong> Handwerk • <strong>[B]</strong> Bauen • <strong>[I]</strong> Beutel</li>
-              <li><strong>[L]</strong> Lexikon (27) • <strong>[Z]</strong> Epochen • <strong>[U]</strong> Urkunde</li>
+              <li>⏱️ Gespielte Zeit: <strong>${gameState.formatPlayTime()}</strong></li>
+              <li>👣 Gelaufene Strecke: <strong>${distText}</strong></li>
+              <li>📜 Kapitel gemeistert: <strong>${gameState.completedChapters.size} / 12</strong></li>
+              <li>👤 Chronist: <strong>${gameState.playerName}</strong> (${gameState.getRoleDef().name})</li>
             </ul>
           </div>
+        </div>
 
-          <!-- Kachel 6: Lernfortschritt & Bilanz -->
-          <div class="pause-tile">
-            <h3>6. 📊 Historische Lernbilanz</h3>
-            <ul class="controls-list">
-              <li>Abgeschlossene Kapitel: <strong>${gameState.completedChapters.size} / 12</strong></li>
-              <li>Archäologische Relikte: <strong>${gameState.discoveredRelics.size} / 5</strong></li>
-              <li>Errichtete Monumente: <strong>${gameState.builtBuildings.size} / 7</strong></li>
-              <li>Aktueller Rang: <strong>${gameState.getCertificateRank().rank}</strong></li>
-            </ul>
+        <!-- Unterrichts-Schnellzugriff & Optionen -->
+        <div class="pause-sub-panel" style="margin-top:12px;background:rgba(20,10,10,0.7);padding:10px 12px;border-radius:8px;border:1px solid rgba(251,191,36,0.3);">
+          <div style="font-weight:800;font-size:13px;color:#fbbf24;margin-bottom:6px;">🗺️ Kapitel-Direkteinstieg für den Geschichtsunterricht (1–12):</div>
+          <div class="pause-chapter-grid">
+            ${CHAPTERS.map(
+              (c) => `
+              <button class="pause-ch-btn ${c.id === gameState.chapter ? 'active' : ''}" data-jumpch="${c.id}">
+                <strong>K${c.id}</strong> (${c.year})
+              </button>
+            `
+            ).join('')}
           </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button id="switch-gender-btn" class="secondary-roman-btn">
+              👤 Figur wechseln (${gameState.gender === 'male' ? 'Titus ➔ Cornelia' : 'Cornelia ➔ Titus'})
+            </button>
+            <button id="cycle-role-btn" class="secondary-roman-btn">
+              ⭐ Rolle wechseln (${gameState.getRoleDef().name})
+            </button>
+            <button id="reset-game-btn" class="danger-roman-btn">
+              ⚠️ Spielstand zurücksetzen
+            </button>
+          </div>
+        </div>
 
-          <!-- Kachel 7: Spielstand zurücksetzen -->
-          <div class="pause-tile">
-            <h3>7. 🔄 Neues Spiel starten</h3>
-            <p>Setzt den gesamten Fortschritt auf Kapitel 1 (753 v. Chr.) zurück:</p>
-            <button id="reset-game-btn" class="danger-roman-btn">⚠️ Spielstand komplett zurücksetzen</button>
-          </div>
+        <!-- Dashboard Footer mit Steuerung -->
+        <div class="pause-controls-footer" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(251,191,36,0.3);font-size:11.5px;color:#d6d3d1;text-align:center;">
+          🎮 <strong>Tastatur:</strong> WASD / Pfeile / Joystick: Bewegen • [E]: Interagieren • [I]: Beutel • [C]: Handwerk • [B]: Bauen • [L]: Lexikon • [Z]: Zeitstrahl • [U]: Urkunde • [M]: Musik • [P/ESC]: Schließen
         </div>
       </div>
     `;
@@ -1679,6 +1795,18 @@ export class UIScene extends Phaser.Scene {
     this.modalOverlay
       .querySelector('#modal-close-btn')
       ?.addEventListener('click', () => this.closeModal());
+
+    this.modalOverlay.querySelector('#pause-open-cert-btn')?.addEventListener('click', () => {
+      this.toggleModal('certificate');
+    });
+
+    this.modalOverlay.querySelector('#pause-open-lex-btn')?.addEventListener('click', () => {
+      this.toggleModal('lexicon');
+    });
+
+    this.modalOverlay.querySelector('#pause-open-build-btn')?.addEventListener('click', () => {
+      this.toggleModal('build');
+    });
 
     this.modalOverlay.querySelector('#import-code-btn')?.addEventListener('click', () => {
       const inp = this.modalOverlay.querySelector('#import-code-input') as HTMLInputElement | null;

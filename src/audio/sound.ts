@@ -1,3 +1,5 @@
+import { FootstepAudioSynthesizer, GroundSurface } from './FootstepAudio';
+
 class SoundSystem {
   private ctx: AudioContext | null = null;
   public muted = false;
@@ -6,6 +8,7 @@ class SoundSystem {
   private bgmVolume = 0.28;
   private inCatacombs = false;
   private currentChapter = 1;
+  private footsteps = new FootstepAudioSynthesizer();
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -241,9 +244,15 @@ class SoundSystem {
     this.playTone(165, 0.2, 'sawtooth', 0.08, 0.12);
   }
 
-  public step() {
-    this.playTone(130 + Math.random() * 35, 0.03, 'triangle', 0.025);
+  public step(surface: GroundSurface = 'stone') {
+    if (this.muted) return;
+    const ctx = this.getContext();
+    if (ctx) {
+      this.footsteps.setContext(ctx);
+      this.footsteps.playFootstep(surface);
+    }
   }
 }
 
 export const sound = new SoundSystem();
+export type { GroundSurface };

@@ -1,16 +1,28 @@
 import Phaser from 'phaser';
-import { sound } from '../audio/sound';
+import { GroundSurface, sound } from '../audio/sound';
 import { CHAPTERS } from '../data/chapters';
 import { BUILDINGS, ITEMS, RomanItemId } from '../data/items';
 import { ROMAN_RELICS, RomanRelic } from '../data/relics';
+import { AmbientSpeechSystem } from '../systems/AmbientSpeechSystem';
+import { AtmosphereManager } from '../systems/AtmosphereManager';
 import { state as gameState } from '../systems/GameState';
-import { WorldDecorManager } from '../world/decor';
+import { artifactInspector } from '../ui/ArtifactInspectorModal';
+import { interactiveStations, StationType } from '../ui/InteractiveStationModal';
+import { LivingWorldManager } from '../world/LivingWorldManager';
 import { WildlifeManager } from '../world/Wildlife';
 import { UIScene } from './UIScene';
 
 interface InteractiveTarget {
   id: string;
-  kind: 'mentor' | 'resource' | 'relic' | 'portal' | 'trader' | 'building_plot';
+  kind:
+    | 'mentor'
+    | 'resource'
+    | 'relic'
+    | 'portal'
+    | 'trader'
+    | 'building_plot'
+    | 'station'
+    | 'artifact';
   name: string;
   sub: string;
   x: number;
@@ -19,12 +31,14 @@ interface InteractiveTarget {
   itemId?: RomanItemId;
   relic?: RomanRelic;
   buildingId?: string;
+  stationType?: StationType;
+  artifactId?: string;
 }
 
 export class WorldScene extends Phaser.Scene {
   private mapW = 100;
   private mapH = 75;
-  private player!: Phaser.GameObjects.Sprite;
+  public player!: Phaser.GameObjects.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: {
     W: Phaser.Input.Keyboard.Key;
@@ -40,14 +54,15 @@ export class WorldScene extends Phaser.Scene {
   private activeTarget: InteractiveTarget | null = null;
   private labelLayer!: HTMLDivElement;
 
-  private decorManager!: WorldDecorManager;
+  private livingWorldManager!: LivingWorldManager;
   private wildlifeManager!: WildlifeManager;
+  private atmosphereManager!: AtmosphereManager;
+  private ambientSpeech!: AmbientSpeechSystem;
   private waterSparkles: Phaser.GameObjects.Rectangle[] = [];
   private stepTimer = 0;
   private facing: 'down' | 'up' | 'left' | 'right' = 'down';
   private bakedGroundEpoch = -1;
   private groundImage?: Phaser.GameObjects.Image;
-  private warmSunlightOverlay?: Phaser.GameObjects.Rectangle;
 
   // Mentor positions per chapter across the historical topography of Rome
   private mentorCoords: Record<number, { x: number; y: number }> = {
@@ -78,11 +93,14 @@ export class WorldScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(0);
 
-    this.decorManager = new WorldDecorManager(this);
+    this.livingWorldManager = new LivingWorldManager(this);
     this.wildlifeManager = new WildlifeManager(this);
+    this.atmosphereManager = new AtmosphereManager(this);
+    this.ambientSpeech = new AmbientSpeechSystem();
 
-    // 1. Echter 16-Bit Tiber-Fluss, Küste von Ostia, Ufersteine, Schilf & Holzbrücken (Steinzeit-Standard)
+    // 1. Echter 16-Bit Tiber-Fluss, Küste von Ostia, Ufersteine, Schilf & Holzbrücken
     this.buildRiverAndBridges();
+    this.livingWorldManager.initWaterEffects();
 
     // 2. 130+ Bodenflora-Details, bemooste Felsen, Eichen & römische Monumente
     this.scatterRomanNature();
@@ -100,12 +118,8 @@ export class WorldScene extends Phaser.Scene {
     // 4. Lebendige Tierwelt (80x80 Ziegen, Rinder, Schmetterlinge & Fische)
     this.wildlifeManager.init(this.mapW, this.mapH);
 
-    // 5. Warme mediterrane Nachmittagssonne (Belichtungs-Overlay)
-    this.warmSunlightOverlay = this.add
-      .rectangle(0, 0, this.mapW * 16, this.mapH * 16, 0xfef3c7, 0.055)
-      .setOrigin(0, 0)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(8500);
+    // 5. Historische Kapitel-Lichtstimmung & Diurnal-Drift
+    this.atmosphereManager.init(this.mapW, this.mapH, gameState.chapter);
 
     // Camera setup
     this.cameras.main.setBounds(0, 0, this.mapW * 16, this.mapH * 16);
@@ -158,19 +172,131 @@ export class WorldScene extends Phaser.Scene {
     if (this.groundImage) {
       this.groundImage.setTexture('rome_ground_baked');
     }
+    this.atmosphereManager.setChapter(gameState.chapter, this.mapW, this.mapH);
     this.rebuildChapterEntities();
     const mCoord = this.mentorCoords[gameState.chapter] || { x: 31, y: 42 };
     this.player.setPosition((mCoord.x - 2) * 16, (mCoord.y + 1.5) * 16);
     this.player.setDepth(this.player.y);
     gameState.playerX = Math.round(this.player.x);
     gameState.playerY = Math.round(this.player.y);
+    this.updateQuestCompass();
+  }
+
+  public getBaseZoom(): number {
+    const w = this.scale.width;
+    const h = this.scale.height;
+    return w < 900 || h < 500 ? 2.25 : 2.75;
+  }
+
+  public focusOnDialog(x?: number, y?: number) {
+    const base = this.getBaseZoom();
+    this.cameras.main.zoomTo(base * 1.15, 350, 'Sine.easeInOut');
+    if (x !== undefined && y !== undefined) {
+      this.cameras.main.pan((this.player.x + x) / 2, (this.player.y + y) / 2, 350, 'Sine.easeInOut');
+    }
+  }
+
+  public resetDialogFocus() {
+    const base = this.getBaseZoom();
+    this.cameras.main.zoomTo(base, 350, 'Sine.easeInOut');
+    this.cameras.main.startFollow(this.player, true, 0.14, 0.14);
+  }
+
+  public getPlayerSurface(): GroundSurface {
+    const tx = Math.floor(this.player.x / 16);
+    const ty = Math.floor(this.player.y / 16);
+
+    // 1. Holzstege, Brücken & Kai von Ostia
+    if (
+      (ty >= 19 && ty <= 21 && tx >= 12 && tx <= 21) ||
+      (ty >= 40 && ty <= 42 && tx >= 11 && tx <= 21) ||
+      (ty >= 57 && ty <= 59 && tx >= 14 && tx <= 21)
+    ) {
+      return 'wood';
+    }
+
+    // 2. Forum Romanum, Steinpflaster & Via Sacra
+    if (
+      (tx >= 45 && tx <= 65 && ty >= 25 && ty <= 39) ||
+      (tx >= 68 && tx <= 86 && ty >= 33 && ty <= 43)
+    ) {
+      return 'stone';
+    }
+
+    // 3. Lehmpfade & Trampelwege
+    if (
+      (tx >= 22 && tx <= 45 && ty >= 38 && ty <= 43) ||
+      (tx >= 30 && tx <= 36 && ty >= 40 && ty <= 55) ||
+      (tx >= 60 && tx <= 70 && ty >= 20 && ty <= 26)
+    ) {
+      return 'dirt';
+    }
+
+    // 4. Naturwiesen & Hügelgrün
+    return 'grass';
+  }
+
+  public updateQuestCompass() {
+    const ch = gameState.chapter;
+    const mCoord = this.mentorCoords[ch] || { x: 31, y: 42 };
+    const chData = CHAPTERS.find((c) => c.id === ch);
+    const mentorName = chData?.mentorName || 'Mentor';
+
+    let target = { x: mCoord.x * 16, y: mCoord.y * 16, name: `${mentorName} (Mentor)` };
+
+    // Wenn Quest noch offen: nächstes Bau- oder Erkundungsziel anvisieren
+    const steps = gameState.getQuestStepProgress();
+    const firstUnfinished = steps.find((s) => !s.done);
+    if (firstUnfinished) {
+      if (firstUnfinished.label.includes('Herd') || firstUnfinished.label.includes('Horreum')) {
+        target = { x: 33 * 16, y: 40 * 16, name: 'Bauplatz: Herd der Vesta [B]' };
+      } else if (firstUnfinished.label.includes('Curia') || firstUnfinished.label.includes('Senat')) {
+        target = { x: 54 * 16, y: 28 * 16, name: 'Bauplatz: Curia Senat [B]' };
+      } else if (firstUnfinished.label.includes('Schmiede')) {
+        target = { x: 66 * 16, y: 21 * 16, name: 'Bauplatz: Legionsschmiede [B]' };
+      } else if (firstUnfinished.label.includes('Werft') || firstUnfinished.label.includes('Ostia')) {
+        target = { x: 19 * 16, y: 55 * 16, name: 'Bauplatz: Ostia Werft [B]' };
+      } else if (firstUnfinished.label.includes('Aquädukt')) {
+        target = { x: 62 * 16, y: 33 * 16, name: 'Bauplatz: Aquädukt [B]' };
+      } else if (firstUnfinished.label.includes('Kolosseum')) {
+        target = { x: 71 * 16, y: 36 * 16, name: 'Bauplatz: Kolosseum [B]' };
+      } else if (firstUnfinished.label.includes('Basilika')) {
+        target = { x: 83 * 16, y: 40 * 16, name: 'Bauplatz: Basilika [B]' };
+      } else if (
+        firstUnfinished.label.includes('Katakomben') ||
+        firstUnfinished.label.includes('Ichthys') ||
+        firstUnfinished.label.includes('Mithras')
+      ) {
+        target = { x: 82 * 16, y: 48 * 16, name: 'Katakomben-Eingang [E]' };
+      }
+    }
+
+    const dx = target.x - this.player.x;
+    const dy = target.y - this.player.y;
+    const distPx = Math.hypot(dx, dy);
+
+    if (distPx <= 32) {
+      gameState.compassText = `📍 Ziel direkt vor dir: ${target.name} (drücke E)`;
+      return;
+    }
+
+    const meters = Math.max(2, Math.round(distPx / 8));
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI); // -180..180
+    let dirStr = '→ Osten';
+    if (angle >= -112.5 && angle < -67.5) dirStr = '↑ Norden';
+    else if (angle >= -67.5 && angle < -22.5) dirStr = '↗ Nordosten';
+    else if (angle >= -22.5 && angle < 22.5) dirStr = '→ Osten';
+    else if (angle >= 22.5 && angle < 67.5) dirStr = '↘ Südosten';
+    else if (angle >= 67.5 && angle < 112.5) dirStr = '↓ Süden';
+    else if (angle >= 112.5 && angle < 157.5) dirStr = '↙ Südwesten';
+    else if (angle >= -157.5 && angle < -112.5) dirStr = '↖ Nordwesten';
+    else dirStr = '← Westen';
+
+    gameState.compassText = `🧭 ${target.name}: ${dirStr} (${meters} m)`;
   }
 
   private updateCameraZoom() {
-    const w = this.scale.width;
-    const h = this.scale.height;
-    const zoom = w < 900 || h < 500 ? 2.25 : 2.75;
-    this.cameras.main.setZoom(zoom);
+    this.cameras.main.setZoom(this.getBaseZoom());
   }
 
   private initDOMLabelLayer() {
@@ -610,9 +736,10 @@ export class WorldScene extends Phaser.Scene {
       [83, 18, 'tree_2'],
     ];
     for (const [tx, ty, frame] of forestTrees) {
-      this.add
+      const tree = this.add
         .image(tx * 16, ty * 16, 'world', frame)
         .setDepth(ty * 16);
+      this.livingWorldManager.registerFlora(tree);
     }
 
     const bushesAndStumps: Array<[number, number, string]> = [
@@ -630,9 +757,12 @@ export class WorldScene extends Phaser.Scene {
       [39, 18, 'stump_c'],
     ];
     for (const [tx, ty, frame] of bushesAndStumps) {
-      this.add
+      const bImg = this.add
         .image(tx * 16, ty * 16, 'world', frame)
         .setDepth(ty * 16);
+      if (frame.startsWith('bush')) {
+        this.livingWorldManager.registerFlora(bImg);
+      }
     }
 
     // Authentic 16-bit mossy quarry rocks ('rock_moss_a..k') in the Northern Quarries & Palatine cliffs
@@ -665,20 +795,20 @@ export class WorldScene extends Phaser.Scene {
     this.placeSprite('lupa_wolf_sprite', 24, 44.5, 0.9);
     this.placeSprite('temple_vesta', 31, 39, 0.9);
     this.placeSprite('brazier_roman_fire', 31, 41, 1);
-    this.decorManager.addTorchGlow(31 * 16, 41 * 16, 32, 0xf97316);
+    this.livingWorldManager.addTorchGlow(31 * 16, 41 * 16, 32, 0xf97316);
 
     // Animated campfire on the Palatine shepherd clearing (using world_atlas / objects fire)
     const palFire = this.add.sprite(28 * 16, 43 * 16, 'objects', 'fire0').setDepth(43 * 16);
     if (this.anims.exists('fire')) palFire.play('fire');
-    this.decorManager.addTorchGlow(28 * 16, 43 * 16, 36, 0xf59e0b);
+    this.livingWorldManager.addTorchGlow(28 * 16, 43 * 16, 36, 0xf59e0b);
 
     // 2. Capitoline Hill & Temple of Jupiter Optimus Maximus (NW of Forum)
     this.placeSprite('temple_jupiter', 45, 25, 0.95);
     this.placeSprite('temple_mars', 59, 25, 0.9);
     this.placeSprite('brazier_roman_fire', 44, 28, 1);
     this.placeSprite('brazier_roman_fire', 47, 28, 1);
-    this.decorManager.addTorchGlow(44 * 16, 28 * 16, 28);
-    this.decorManager.addTorchGlow(47 * 16, 28 * 16, 28);
+    this.livingWorldManager.addTorchGlow(44 * 16, 28 * 16, 28);
+    this.livingWorldManager.addTorchGlow(47 * 16, 28 * 16, 28);
 
     // 3. Forum Romanum Columns, Rostra & Statues
     const forumCols = [46, 50, 56, 60, 64];
@@ -716,7 +846,7 @@ export class WorldScene extends Phaser.Scene {
 
     // 6. Northern Quarries & Mines (Anvil & Forge glow)
     this.placeSprite('forge_anvil', 61, 14, 0.95);
-    this.decorManager.addTorchGlow(61 * 16, 14 * 16, 26, 0xef4444);
+    this.livingWorldManager.addTorchGlow(61 * 16, 14 * 16, 26, 0xef4444);
 
     // 7. Roman Cypresses & Milestones along Via Appia & Via Sacra
     const cypressSpots = [
@@ -760,6 +890,8 @@ export class WorldScene extends Phaser.Scene {
       .sprite(mPos.x * 16, mPos.y * 16, chapterData.mentorId, 0)
       .setDepth(mPos.y * 16);
     this.dynamicGroup.add(this.mentorSprite);
+    this.livingWorldManager.clearMentors();
+    this.livingWorldManager.registerMentor(this.mentorSprite);
 
     const questReady = gameState.checkQuest();
     this.targets.push({
@@ -1036,6 +1168,202 @@ export class WorldScene extends Phaser.Scene {
         this.add.image(58 * 16, 36 * 16, 'ruined_arch_476').setScale(0.85).setDepth(36 * 16),
       );
     }
+
+    // 5. DIDACTIC INTERACTIVE STATIONS (Lernstationen mit Minigames)
+    const stationsList: Array<{
+      id: string;
+      stationType: StationType;
+      name: string;
+      sub: string;
+      tx: number;
+      ty: number;
+      minChapter: number;
+      spriteFrame: string;
+      auraColor: number;
+    }> = [
+      {
+        id: 'station_epigraphik',
+        stationType: 'epigraphy',
+        name: 'Inschriften-Station (Epigraphik)',
+        sub: '[E] Steinmetz-Inschrift säubern & SPQR enträtseln',
+        tx: 49,
+        ty: 34,
+        minChapter: 2,
+        spriteFrame: 'gravestone',
+        auraColor: 0x38bdf8,
+      },
+      {
+        id: 'station_scale',
+        stationType: 'scale',
+        name: 'Horreum-Waage (Statera)',
+        sub: '[E] Getreide abwiegen mit römischen Gewichten',
+        tx: 23,
+        ty: 56,
+        minChapter: 3,
+        spriteFrame: 'campfire',
+        auraColor: 0xf59e0b,
+      },
+      {
+        id: 'station_senate',
+        stationType: 'senate',
+        name: 'Senats-Wachstafel (Tabella)',
+        sub: '[E] In der Curia abstimmen (Ackergesetz Gracchus)',
+        tx: 56,
+        ty: 28,
+        minChapter: 5,
+        spriteFrame: 'totem',
+        auraColor: 0xa855f7,
+      },
+      {
+        id: 'station_aqueduct',
+        stationType: 'aqueduct',
+        name: 'Aquädukt-Wasserbau (Pfeiler)',
+        sub: '[E] Wasserleitung durch Rohrdrehung verbinden',
+        tx: 64,
+        ty: 31,
+        minChapter: 6,
+        spriteFrame: 'stone_arch_a',
+        auraColor: 0x06b6d4,
+      },
+      {
+        id: 'station_sundial',
+        stationType: 'sundial',
+        name: 'Solarium Augusti (Sonnenuhr)',
+        sub: '[E] Obeliskenschatten auf Hora Sexta drehen',
+        tx: 70,
+        ty: 24,
+        minChapter: 8,
+        spriteFrame: 'stone_ring',
+        auraColor: 0xeab308,
+      },
+    ];
+
+    for (const st of stationsList) {
+      if (st.minChapter <= ch) {
+        const marker = this.add
+          .image(st.tx * 16, st.ty * 16, 'world', st.spriteFrame)
+          .setScale(0.85)
+          .setDepth(st.ty * 16);
+        const aura = this.add
+          .circle(st.tx * 16, st.ty * 16, 14, st.auraColor, 0.28)
+          .setDepth(st.ty * 16 - 1);
+        this.dynamicGroup.add(marker);
+        this.dynamicGroup.add(aura);
+
+        this.tweens.add({
+          targets: aura,
+          scale: { from: 0.88, to: 1.15 },
+          alpha: { from: 0.18, to: 0.36 },
+          duration: 1200 + Math.random() * 400,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+
+        this.targets.push({
+          id: st.id,
+          kind: 'station',
+          name: st.name,
+          sub: st.sub,
+          x: st.tx * 16,
+          y: st.ty * 16,
+          minChapter: st.minChapter,
+          stationType: st.stationType,
+        });
+      }
+    }
+
+    // 6. 360° INSPECTABLE ARTIFACT PEDESTALS
+    const inspectableArtifacts: Array<{
+      id: string;
+      artifactId: string;
+      name: string;
+      sub: string;
+      tx: number;
+      ty: number;
+      minChapter: number;
+    }> = [
+      {
+        id: 'art_denar',
+        artifactId: 'denar',
+        name: 'Römischer Silberdenar',
+        sub: '[E] Münze im 360°-Inspektor untersuchen',
+        tx: 53,
+        ty: 36,
+        minChapter: 2,
+      },
+      {
+        id: 'art_scutum',
+        artifactId: 'scutum',
+        name: 'Legionärsschild (Scutum)',
+        sub: '[E] Schild im 360°-Inspektor untersuchen',
+        tx: 66,
+        ty: 24,
+        minChapter: 4,
+      },
+      {
+        id: 'art_tabella',
+        artifactId: 'tabella',
+        name: 'Wachstafel & Stilus',
+        sub: '[E] Schreibtafel im 360°-Inspektor untersuchen',
+        tx: 51,
+        ty: 30,
+        minChapter: 5,
+      },
+      {
+        id: 'art_lucerna',
+        artifactId: 'lucerna',
+        name: 'Römische Ton-Öllampe',
+        sub: '[E] Lucerna im 360°-Inspektor untersuchen',
+        tx: 80,
+        ty: 46,
+        minChapter: 9,
+      },
+      {
+        id: 'art_codex',
+        artifactId: 'codex',
+        name: 'Spätantiker Pergament-Codex',
+        sub: '[E] Manuskript im 360°-Inspektor untersuchen',
+        tx: 56,
+        ty: 36,
+        minChapter: 11,
+      },
+    ];
+
+    for (const art of inspectableArtifacts) {
+      if (art.minChapter <= ch) {
+        const ped = this.add
+          .image(art.tx * 16, art.ty * 16, 'world', 'stone_ring')
+          .setScale(0.65)
+          .setDepth(art.ty * 16);
+        const glow = this.add
+          .circle(art.tx * 16, art.ty * 16, 12, 0xfbbf24, 0.3)
+          .setDepth(art.ty * 16 - 1);
+        this.dynamicGroup.add(ped);
+        this.dynamicGroup.add(glow);
+
+        this.tweens.add({
+          targets: glow,
+          scale: { from: 0.9, to: 1.25 },
+          alpha: { from: 0.2, to: 0.42 },
+          duration: 1000 + Math.random() * 300,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+
+        this.targets.push({
+          id: art.id,
+          kind: 'artifact',
+          name: art.name,
+          sub: art.sub,
+          x: art.tx * 16,
+          y: art.ty * 16,
+          minChapter: art.minChapter,
+          artifactId: art.artifactId,
+        });
+      }
+    }
   }
 
   // =========================================================================
@@ -1067,6 +1395,22 @@ export class WorldScene extends Phaser.Scene {
     if (t.kind === 'relic' && t.relic) {
       sound.click();
       ui.openRelicModal(t.relic);
+      return;
+    }
+
+    if (t.kind === 'station' && t.stationType) {
+      sound.click();
+      interactiveStations.open(t.stationType, () => {
+        ui.showToast('🏛️ Station gemeistert! (+100 Chronistenpunkte)');
+        gameState.addPoints(100);
+        sound.success();
+      });
+      return;
+    }
+
+    if (t.kind === 'artifact' && t.artifactId) {
+      sound.click();
+      artifactInspector.open(t.artifactId);
       return;
     }
 
@@ -1125,20 +1469,15 @@ export class WorldScene extends Phaser.Scene {
   // =========================================================================
   update(time: number, delta: number) {
     const ui = this.scene.get('UI') as UIScene;
-    if (ui && ui.isModalOpen()) {
+    const isStationOrArtifactOpen =
+      document.querySelector('#interactive-station-modal[style*="display: flex"]') !== null ||
+      document.querySelector('#artifact-inspector-modal[style*="display: flex"]') !== null;
+    if ((ui && ui.isModalOpen()) || isStationOrArtifactOpen) {
       const prefix = gameState.gender === 'female' ? 'female' : 'male';
       this.player.play(`${prefix}_idle_${this.facing}`, true);
       if (this.labelLayer) this.labelLayer.innerHTML = '';
+      this.ambientSpeech.dismissBubble(true);
       return;
-    }
-
-    this.decorManager.update(time);
-    this.wildlifeManager.update(time, delta);
-
-    // Water shimmer animation
-    for (let i = 0; i < this.waterSparkles.length; i++) {
-      const sp = this.waterSparkles[i];
-      sp.alpha = 0.25 + Math.sin(time * 0.004 + i) * 0.35;
     }
 
     const dt = delta / 1000;
@@ -1159,8 +1498,30 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    const prefix = gameState.gender === 'female' ? 'female' : 'male';
     const len = Math.hypot(vx, vy);
+
+    this.livingWorldManager.update(delta, this.player.x, this.player.y, len > 0);
+    this.wildlifeManager.update(time, delta);
+    this.atmosphereManager.update(delta);
+    const canvas = this.game.canvas;
+    if (canvas) {
+      this.ambientSpeech.update(
+        this.player.x,
+        this.player.y,
+        gameState.chapter,
+        this.cameras.main,
+        canvas.getBoundingClientRect()
+      );
+    }
+    this.updateQuestCompass();
+
+    // Water shimmer animation
+    for (let i = 0; i < this.waterSparkles.length; i++) {
+      const sp = this.waterSparkles[i];
+      sp.alpha = 0.25 + Math.sin(time * 0.004 + i) * 0.35;
+    }
+
+    const prefix = gameState.gender === 'female' ? 'female' : 'male';
     if (len > 0) {
       vx = (vx / len) * speed;
       vy = (vy / len) * speed;
@@ -1176,6 +1537,7 @@ export class WorldScene extends Phaser.Scene {
         this.player.setDepth(this.player.y);
         gameState.playerX = Math.round(this.player.x);
         gameState.playerY = Math.round(this.player.y);
+        gameState.distanceMeters += (speed * dt) / 8;
       }
 
       if (Math.abs(vx) > Math.abs(vy)) {
@@ -1188,7 +1550,7 @@ export class WorldScene extends Phaser.Scene {
 
       this.stepTimer -= delta;
       if (this.stepTimer <= 0) {
-        sound.step();
+        sound.step(this.getPlayerSurface());
         this.stepTimer = 270;
       }
     } else {

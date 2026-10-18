@@ -8,6 +8,7 @@ interface GrazingAnimal {
   vx: number;
   vy: number;
   timer: number;
+  baseScale: number;
   state: 'idle' | 'walk';
 }
 
@@ -45,7 +46,7 @@ export class WildlifeManager {
     this.fliers = [];
     this.fishes = [];
 
-    // 1. Lebendige Ziegen- & Rinderherden (echte 80x80 Spritesheets mit goat-walk / cow-walk wie in der Steinzeit!)
+    // 1. Ziegen & Rinder nach Proportionsmatrix (SKILL 1.1: Ziege 0.24, Rind 0.35 relative zu 16x32 Spieler)
     const goatSpawns = [
       { x: 25 * 16, y: 49 * 16 },
       { x: 27 * 16, y: 51 * 16 },
@@ -57,7 +58,7 @@ export class WildlifeManager {
     for (const sp of goatSpawns) {
       const spr = this.scene.add
         .sprite(sp.x, sp.y, 'goat', 0)
-        .setScale(0.62)
+        .setScale(0.24)
         .setDepth(sp.y);
       spr.play('goat-idle');
       this.animals.push({
@@ -68,6 +69,7 @@ export class WildlifeManager {
         vx: 0,
         vy: 0,
         timer: 800 + Math.random() * 1800,
+        baseScale: 0.24,
         state: 'idle',
       });
     }
@@ -80,7 +82,7 @@ export class WildlifeManager {
     for (const sp of cowSpawns) {
       const spr = this.scene.add
         .sprite(sp.x, sp.y, 'cow', 0)
-        .setScale(0.62)
+        .setScale(0.35)
         .setDepth(sp.y);
       spr.play('cow-idle');
       this.animals.push({
@@ -91,6 +93,7 @@ export class WildlifeManager {
         vx: 0,
         vy: 0,
         timer: 1100 + Math.random() * 2000,
+        baseScale: 0.35,
         state: 'idle',
       });
     }
@@ -184,6 +187,9 @@ export class WildlifeManager {
         a.sprite.x += a.vx * dt;
         a.sprite.y += a.vy * dt;
         a.sprite.setDepth(a.sprite.y);
+      } else {
+        const breathe = 1 + Math.sin(time * 0.003 + a.homeX) * 0.025;
+        a.sprite.setScale(a.baseScale, a.baseScale * breathe);
       }
     }
 

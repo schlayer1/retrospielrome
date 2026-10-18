@@ -146,6 +146,52 @@ async function main() {
     });
     console.log('Captured rom_v2_7_imperial_forum_ch8.png');
 
+    // 6. Open Progressive 2-Column Lexicon Modal (KeyL)
+    await page.keyboard.press('KeyL');
+    await sleep(700);
+    await page.screenshot({
+      path: path.join(ARTIFACT_DIR, 'rom_v2_8_lexicon_modal.png'),
+    });
+    console.log('Captured rom_v2_8_lexicon_modal.png');
+    await page.keyboard.press('Escape');
+    await sleep(400);
+
+    // 7. Test and capture an Interactive Didactic Station (e.g. Aquädukt)
+    await page.evaluate(() => {
+      const modal = window.interactiveStations;
+      if (modal) {
+        modal.open('aqueduct');
+      }
+    });
+    await sleep(700);
+    await page.screenshot({
+      path: path.join(ARTIFACT_DIR, 'rom_v2_9_interactive_station.png'),
+    });
+    console.log('Captured rom_v2_9_interactive_station.png');
+    await page.evaluate(() => {
+      const modal = window.interactiveStations;
+      if (modal) modal.close();
+    });
+    await sleep(400);
+
+    // 8. Test and capture 16-Bit Artifact Inspector (e.g. Denar)
+    await page.evaluate(() => {
+      const modal = window.artifactInspector;
+      if (modal) {
+        modal.open('denar');
+      }
+    });
+    await sleep(700);
+    await page.screenshot({
+      path: path.join(ARTIFACT_DIR, 'rom_v2_10_artifact_inspector.png'),
+    });
+    console.log('Captured rom_v2_10_artifact_inspector.png');
+    await page.evaluate(() => {
+      const modal = window.artifactInspector;
+      if (modal) modal.close();
+    });
+    await sleep(400);
+
     console.log('Errors:', errors.length);
     if (errors.length > 0) console.error(errors);
     console.log('Failed URLs:', failedUrls.length);
