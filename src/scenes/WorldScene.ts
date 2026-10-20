@@ -765,6 +765,41 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
+    // Authentische 16-Bit Beeren- & Blütenbüsche (sdv_bushes) & Wildgras-Büschel (sdv_grass)
+    const extraFloraBushes: Array<[number, number, number]> = [
+      [22, 38, 0],
+      [28, 43, 2],
+      [32, 46, 4],
+      [42, 49, 1],
+      [46, 48, 3],
+      [26, 52, 2],
+      [36, 51, 0],
+      [71, 32, 5],
+      [78, 29, 1],
+      [81, 35, 4],
+    ];
+    for (const [tx, ty, frame] of extraFloraBushes) {
+      const b = this.add.image(tx * 16, ty * 16, 'sdv_bushes', frame).setDepth(ty * 16);
+      this.livingWorldManager.registerFlora(b);
+    }
+
+    const wildGrassSpots: Array<[number, number, number]> = [
+      [21, 39, 0],
+      [26, 41, 1],
+      [30, 45, 2],
+      [39, 46, 0],
+      [45, 49, 3],
+      [37, 55, 1],
+      [28, 53, 2],
+      [75, 28, 0],
+      [80, 33, 1],
+      [19, 45, 3],
+      [18, 52, 2],
+    ];
+    for (const [tx, ty, frame] of wildGrassSpots) {
+      this.add.image(tx * 16, ty * 16, 'sdv_grass', frame).setDepth(ty * 16 - 2);
+    }
+
     // Authentic 16-bit mossy quarry rocks ('rock_moss_a..k') in the Northern Quarries & Palatine cliffs
     const rockSpots: Array<[number, number, string]> = [
       [21, 45, 'rock_moss_a'],
@@ -821,14 +856,13 @@ export class WorldScene extends Phaser.Scene {
     this.placeSprite('forum_stall_red', 47, 39, 0.85);
     this.placeSprite('forum_stall_blue', 57, 39, 0.85);
 
-    // 4. Agricultural Estates (Villa Rustica, Olive Grove, Vineyard, Spelt Field with real 16-bit soil!)
+    // 4. Agricultural Estates (Villa Rustica, Olive Grove, Vineyard, Spelt Field with real 16-bit soil & 5-stage wheat!)
     this.placeSprite('villa_rustica', 38, 52, 0.9);
     for (let x = 30; x <= 34; x += 1) {
       for (let y = 51; y <= 54; y += 1) {
         this.add.image(x * 16, y * 16, 'farm', 'soil_wet').setDepth(3);
-        if ((x + y) % 2 === 0) {
-          this.add.image(x * 16, y * 16 - 6, 'farm', 'wheat_ripe').setDepth(y * 16);
-        }
+        const stage = (x * 3 + y * 7) % 5;
+        this.add.image(x * 16, y * 16 - 6, 'wheat_stages', stage).setDepth(y * 16);
       }
     }
     this.placeSprite('olive_grove_tree', 41, 47, 0.95);
@@ -1501,7 +1535,7 @@ export class WorldScene extends Phaser.Scene {
     const len = Math.hypot(vx, vy);
 
     this.livingWorldManager.update(delta, this.player.x, this.player.y, len > 0);
-    this.wildlifeManager.update(time, delta);
+    this.wildlifeManager.update(time, delta, this.player.x, this.player.y);
     this.atmosphereManager.update(delta);
     const canvas = this.game.canvas;
     if (canvas) {

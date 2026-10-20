@@ -121,23 +121,31 @@ export class BootScene extends Phaser.Scene {
       });
     }
 
-    // 3. Autonomous Mediterranean Fauna (80x80 frames, Steinzeit-Standard)
-    this.load.spritesheet('goat', '/assets/gfx/goat.png', {
-      frameWidth: 80,
-      frameHeight: 80,
-    });
-    this.load.spritesheet('cow', '/assets/gfx/cow.png', {
-      frameWidth: 80,
-      frameHeight: 80,
-    });
-    this.load.spritesheet('animal_goat', '/assets/gfx/goat.png', {
-      frameWidth: 80,
-      frameHeight: 80,
-    });
-    this.load.spritesheet('animal_cow', '/assets/gfx/cow.png', {
-      frameWidth: 80,
-      frameHeight: 80,
-    });
+    // 3. Authentische 16-Bit SNES-Fauna & Flora (Steinzeit-Benchmark)
+    this.load.spritesheet('sdv_goat', '/assets/fauna/goat.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_goat_baby', '/assets/fauna/goat_baby.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_cow', '/assets/fauna/cow.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_calf', '/assets/fauna/calf.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_wolf', '/assets/fauna/wolf.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_dog_lupo', '/assets/fauna/dog_lupo.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_duck', '/assets/fauna/duck.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('sdv_critters', '/assets/fauna/critters.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('sdv_rabbit', '/assets/fauna/rabbit.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('sdv_pig', '/assets/fauna/pig.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_horse', '/assets/fauna/horse.png', { frameWidth: 32, frameHeight: 32 });
+
+    // Flora
+    this.load.spritesheet('sdv_bushes', '/assets/flora/bushes.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('sdv_crops', '/assets/flora/crops.png', { frameWidth: 16, frameHeight: 32 });
+    this.load.spritesheet('wheat_stages', '/assets/flora/wheat_stages.png', { frameWidth: 20, frameHeight: 28 });
+    this.load.spritesheet('sdv_grass', '/assets/flora/grass.png', { frameWidth: 20, frameHeight: 20 });
+    this.load.spritesheet('sdv_cave_plants', '/assets/flora/cave_plants.png', { frameWidth: 16, frameHeight: 24 });
+
+    // Legacy Fallback-Aliasse
+    this.load.spritesheet('goat', '/assets/fauna/goat.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('cow', '/assets/fauna/cow.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('animal_goat', '/assets/fauna/goat.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('animal_cow', '/assets/fauna/cow.png', { frameWidth: 32, frameHeight: 32 });
 
     // 4. All 72 Extracted 16-Bit Roman Architecture & Prop Sprites
     const romanSprites = [
@@ -238,30 +246,101 @@ export class BootScene extends Phaser.Scene {
     registerFrames('farm', FARM_FRAMES);
     registerFrames('cave_tiles', CAVE_FRAMES);
 
-    // Register animations for goats, cattle & fire (matching Steinzeit Wildlife.ts)
+    // Register animations for fauna & flora (Steinzeit-Benchmark)
     if (!this.anims.exists('goat-idle')) {
-      this.anims.create({
-        key: 'goat-idle',
-        frames: [{ key: 'goat', frame: 0 }],
-        frameRate: 1,
-      });
-      this.anims.create({
-        key: 'goat-walk',
-        frames: this.anims.generateFrameNumbers('goat', { start: 4, end: 7 }),
-        frameRate: 6,
-        repeat: -1,
-      });
-      this.anims.create({
-        key: 'cow-idle',
-        frames: [{ key: 'cow', frame: 0 }],
-        frameRate: 1,
-      });
-      this.anims.create({
-        key: 'cow-walk',
-        frames: this.anims.generateFrameNumbers('cow', { start: 4, end: 7 }),
-        frameRate: 5,
-        repeat: -1,
-      });
+      // Ziege (sdv_goat)
+      this.anims.create({ key: 'goat-idle', frames: [{ key: 'sdv_goat', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'goat-walk', frames: this.anims.generateFrameNumbers('sdv_goat', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'goat-walk-down', frames: this.anims.generateFrameNumbers('sdv_goat', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'goat-walk-right', frames: this.anims.generateFrameNumbers('sdv_goat', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'goat-walk-up', frames: this.anims.generateFrameNumbers('sdv_goat', { start: 8, end: 11 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'goat-graze', frames: this.anims.generateFrameNumbers('sdv_goat', { start: 12, end: 15 }), frameRate: 4, repeat: -1 });
+
+      // Zicklein (sdv_goat_baby)
+      this.anims.create({ key: 'goat-baby-idle', frames: [{ key: 'sdv_goat_baby', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'goat-baby-walk', frames: this.anims.generateFrameNumbers('sdv_goat_baby', { start: 4, end: 7 }), frameRate: 7, repeat: -1 });
+      this.anims.create({ key: 'goat-baby-walk-down', frames: this.anims.generateFrameNumbers('sdv_goat_baby', { start: 0, end: 3 }), frameRate: 7, repeat: -1 });
+      this.anims.create({ key: 'goat-baby-walk-right', frames: this.anims.generateFrameNumbers('sdv_goat_baby', { start: 4, end: 7 }), frameRate: 7, repeat: -1 });
+      this.anims.create({ key: 'goat-baby-walk-up', frames: this.anims.generateFrameNumbers('sdv_goat_baby', { start: 8, end: 11 }), frameRate: 7, repeat: -1 });
+      this.anims.create({ key: 'goat-baby-play', frames: this.anims.generateFrameNumbers('sdv_goat_baby', { start: 12, end: 15 }), frameRate: 5, repeat: -1 });
+
+      // Rind / Ochse (sdv_cow)
+      this.anims.create({ key: 'cow-idle', frames: [{ key: 'sdv_cow', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'cow-walk', frames: this.anims.generateFrameNumbers('sdv_cow', { start: 4, end: 7 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'cow-walk-down', frames: this.anims.generateFrameNumbers('sdv_cow', { start: 0, end: 3 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'cow-walk-right', frames: this.anims.generateFrameNumbers('sdv_cow', { start: 4, end: 7 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'cow-walk-up', frames: this.anims.generateFrameNumbers('sdv_cow', { start: 8, end: 11 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'cow-graze', frames: this.anims.generateFrameNumbers('sdv_cow', { start: 12, end: 15 }), frameRate: 4, repeat: -1 });
+
+      // Kalb (sdv_calf)
+      this.anims.create({ key: 'calf-idle', frames: [{ key: 'sdv_calf', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'calf-walk', frames: this.anims.generateFrameNumbers('sdv_calf', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'calf-walk-down', frames: this.anims.generateFrameNumbers('sdv_calf', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'calf-walk-right', frames: this.anims.generateFrameNumbers('sdv_calf', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'calf-walk-up', frames: this.anims.generateFrameNumbers('sdv_calf', { start: 8, end: 11 }), frameRate: 6, repeat: -1 });
+
+      // Wolf (sdv_wolf)
+      this.anims.create({ key: 'wolf-idle', frames: [{ key: 'sdv_wolf', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'wolf-walk', frames: this.anims.generateFrameNumbers('sdv_wolf', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'wolf-walk-down', frames: this.anims.generateFrameNumbers('sdv_wolf', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'wolf-walk-right', frames: this.anims.generateFrameNumbers('sdv_wolf', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'wolf-walk-up', frames: this.anims.generateFrameNumbers('sdv_wolf', { start: 8, end: 11 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'wolf-howl', frames: this.anims.generateFrameNumbers('sdv_wolf', { start: 12, end: 15 }), frameRate: 4, repeat: -1 });
+
+      // Römischer Hofhund / Jagdhund (sdv_dog_lupo)
+      this.anims.create({ key: 'dog-idle', frames: [{ key: 'sdv_dog_lupo', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'dog-walk', frames: this.anims.generateFrameNumbers('sdv_dog_lupo', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'dog-walk-down', frames: this.anims.generateFrameNumbers('sdv_dog_lupo', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'dog-walk-right', frames: this.anims.generateFrameNumbers('sdv_dog_lupo', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'dog-walk-up', frames: this.anims.generateFrameNumbers('sdv_dog_lupo', { start: 8, end: 11 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'dog-sit', frames: [{ key: 'sdv_dog_lupo', frame: 16 }], frameRate: 1 });
+      this.anims.create({ key: 'dog-lay', frames: [{ key: 'sdv_dog_lupo', frame: 20 }], frameRate: 1 });
+      this.anims.create({ key: 'dog-wag', frames: this.anims.generateFrameNumbers('sdv_dog_lupo', { start: 16, end: 19 }), frameRate: 6, repeat: -1 });
+
+      // Feldhase (sdv_rabbit)
+      this.anims.create({ key: 'rabbit-idle', frames: [{ key: 'sdv_rabbit', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'rabbit-walk', frames: this.anims.generateFrameNumbers('sdv_rabbit', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'rabbit-hop-down', frames: this.anims.generateFrameNumbers('sdv_rabbit', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'rabbit-hop-right', frames: this.anims.generateFrameNumbers('sdv_rabbit', { start: 4, end: 7 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'rabbit-hop-up', frames: this.anims.generateFrameNumbers('sdv_rabbit', { start: 8, end: 11 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'rabbit-sniff', frames: this.anims.generateFrameNumbers('sdv_rabbit', { start: 12, end: 15 }), frameRate: 4, repeat: -1 });
+
+      // Weideschwein (sdv_pig)
+      this.anims.create({ key: 'pig-idle', frames: [{ key: 'sdv_pig', frame: 4 }], frameRate: 1 });
+      this.anims.create({ key: 'pig-walk', frames: this.anims.generateFrameNumbers('sdv_pig', { start: 4, end: 7 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'pig-walk-down', frames: this.anims.generateFrameNumbers('sdv_pig', { start: 0, end: 3 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'pig-walk-right', frames: this.anims.generateFrameNumbers('sdv_pig', { start: 4, end: 7 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'pig-walk-up', frames: this.anims.generateFrameNumbers('sdv_pig', { start: 8, end: 11 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'pig-forage', frames: this.anims.generateFrameNumbers('sdv_pig', { start: 12, end: 15 }), frameRate: 4, repeat: -1 });
+
+      // Wildente auf dem Tiber (sdv_duck)
+      this.anims.create({ key: 'duck-idle', frames: [{ key: 'sdv_duck', frame: 12 }], frameRate: 1 });
+      this.anims.create({ key: 'duck-swim', frames: this.anims.generateFrameNumbers('sdv_duck', { start: 16, end: 19 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'duck-swim-down', frames: this.anims.generateFrameNumbers('sdv_duck', { start: 12, end: 15 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'duck-swim-right', frames: this.anims.generateFrameNumbers('sdv_duck', { start: 16, end: 19 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'duck-swim-up', frames: this.anims.generateFrameNumbers('sdv_duck', { start: 20, end: 23 }), frameRate: 5, repeat: -1 });
+      this.anims.create({ key: 'duck-dive', frames: this.anims.generateFrameNumbers('sdv_duck', { start: 24, end: 27 }), frameRate: 4, repeat: -1 });
+      this.anims.create({ key: 'duck-flap', frames: this.anims.generateFrameNumbers('sdv_duck', { start: 28, end: 31 }), frameRate: 6, repeat: -1 });
+
+      // Umgebungs-Critters: Schmetterlinge, Frösche & Baum-Eichhörnchen (sdv_critters)
+      this.anims.create({ key: 'critter-butterfly-1', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 128, end: 131 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'critter-butterfly-2', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 132, end: 135 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'critter-butterfly-3', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 136, end: 139 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'critter-frog-idle', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 280, end: 281 }), frameRate: 2, repeat: -1 });
+      this.anims.create({ key: 'critter-frog-croak', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 281, end: 283 }), frameRate: 4, repeat: -1 });
+      this.anims.create({ key: 'critter-frog-jump', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 284, end: 287 }), frameRate: 8, repeat: 0 });
+      this.anims.create({ key: 'critter-squirrel-idle', frames: [{ key: 'sdv_critters', frame: 320 }], frameRate: 1 });
+      this.anims.create({ key: 'critter-squirrel-run', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 320, end: 323 }), frameRate: 8, repeat: -1 });
+      this.anims.create({ key: 'critter-squirrel-climb', frames: this.anims.generateFrameNumbers('sdv_critters', { start: 324, end: 327 }), frameRate: 8, repeat: -1 });
+
+      // Römische Kavallerie- & Zugpferde (sdv_horse)
+      this.anims.create({ key: 'horse-idle', frames: [{ key: 'sdv_horse', frame: 7 }], frameRate: 1 });
+      this.anims.create({ key: 'horse-walk', frames: this.anims.generateFrameNumbers('sdv_horse', { start: 8, end: 13 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'horse-walk-down', frames: this.anims.generateFrameNumbers('sdv_horse', { start: 1, end: 6 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'horse-walk-right', frames: this.anims.generateFrameNumbers('sdv_horse', { start: 8, end: 13 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'horse-walk-up', frames: this.anims.generateFrameNumbers('sdv_horse', { start: 15, end: 20 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'horse-graze', frames: this.anims.generateFrameNumbers('sdv_horse', { start: 21, end: 24 }), frameRate: 4, repeat: -1 });
+
       this.anims.create({
         key: 'fire',
         frames: Array.from({ length: 7 }, (_, i) => ({ key: 'objects', frame: `fire${i}` })),

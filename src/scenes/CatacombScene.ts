@@ -150,6 +150,20 @@ export class CatacombScene extends Phaser.Scene {
       this.add.circle(tc.x, tc.y, 16, 0xfef08a, 0.25).setDepth(9001);
     }
 
+    // Subterranean Flora & Catacomb Moss/Fungi (sdv_cave_plants)
+    const caveFlora = [
+      { x: 8 * 16, y: 12 * 16, frame: 0 },
+      { x: 15 * 16, y: 12 * 16, frame: 1 },
+      { x: 11 * 16, y: 9 * 16, frame: 2 },
+      { x: 25 * 16, y: 12 * 16, frame: 3 },
+      { x: 34 * 16, y: 12 * 16, frame: 0 },
+      { x: 18 * 16, y: 8 * 16, frame: 4 },
+      { x: 22 * 16, y: 8 * 16, frame: 1 },
+    ];
+    for (const cf of caveFlora) {
+      this.add.image(cf.x, cf.y, 'sdv_cave_plants', cf.frame).setDepth(cf.y);
+    }
+
     // 3. Interactive Stations
     this.stations = [
       {
