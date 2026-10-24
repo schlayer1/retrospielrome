@@ -10,6 +10,8 @@ import { artifactInspector } from '../ui/ArtifactInspectorModal';
 import { interactiveStations, StationType } from '../ui/InteractiveStationModal';
 import { LivingWorldManager } from '../world/LivingWorldManager';
 import { WildlifeManager } from '../world/Wildlife';
+import { ChapterBanner } from '../ui/ChapterBanner';
+import { CompanionManager } from '../world/Companion';
 import { UIScene } from './UIScene';
 
 interface InteractiveTarget {
@@ -58,6 +60,8 @@ export class WorldScene extends Phaser.Scene {
   private wildlifeManager!: WildlifeManager;
   private atmosphereManager!: AtmosphereManager;
   private ambientSpeech!: AmbientSpeechSystem;
+  private chapterBanner!: ChapterBanner;
+  private companionManager!: CompanionManager;
   private waterSparkles: Phaser.GameObjects.Rectangle[] = [];
   private stepTimer = 0;
   private facing: 'down' | 'up' | 'left' | 'right' = 'down';
@@ -66,18 +70,18 @@ export class WorldScene extends Phaser.Scene {
 
   // Mentor positions per chapter across the historical topography of Rome
   private mentorCoords: Record<number, { x: number; y: number }> = {
-    1: { x: 31, y: 42 }, // Romulus on the Palatine Hill
+    1: { x: 28, y: 41 }, // Romulus on the Palatine Hill
     2: { x: 50, y: 34 }, // Brutus at the Republican Forum Romanum
-    3: { x: 35, y: 49 }, // Cincinnatus by the plow & fields
-    4: { x: 64, y: 24 }, // Scipio Africanus at the Castra Legionis
-    5: { x: 48, y: 37 }, // Tiberius Gracchus at the Rostra / Forum
+    3: { x: 33, y: 50 }, // Cincinnatus by the plow & fields
+    4: { x: 64, y: 25 }, // Scipio Africanus at the Castra Legionis
+    5: { x: 47, y: 37 }, // Tiberius Gracchus at the Rostra / Forum
     6: { x: 68, y: 37 }, // Spartacus near the Arena / Gladiators
     7: { x: 55, y: 31 }, // Julius Caesar in front of the Senate Curia
-    8: { x: 69, y: 23 }, // Augustus on the Campus Martius / Ara Pacis
+    8: { x: 69, y: 24 }, // Augustus on the Campus Martius / Ara Pacis
     9: { x: 73, y: 43 }, // Claudia near the Insulae & Catacomb path
-    10: { x: 76, y: 22 }, // Trajan near the Limes & Imperial Forum
-    11: { x: 80, y: 41 }, // Constantine near the Basilica
-    12: { x: 54, y: 35 }, // Cassiodorus amid the late-antique Forum & Scriptorium
+    10: { x: 79, y: 22 }, // Trajan near the Limes & Imperial Forum
+    11: { x: 79, y: 41 }, // Constantine near the Basilica
+    12: { x: 53, y: 31 }, // Cassiodorus amid the late-antique Forum & Scriptorium
   };
 
   constructor() {
@@ -98,6 +102,16 @@ export class WorldScene extends Phaser.Scene {
     this.atmosphereManager = new AtmosphereManager(this);
     this.ambientSpeech = new AmbientSpeechSystem();
 
+    this.chapterBanner = new ChapterBanner();
+    const chDef = CHAPTERS.find((c) => c.id === gameState.chapter);
+    if (chDef) {
+      this.chapterBanner.show({
+        chapterNumber: gameState.chapter,
+        title: chDef.title,
+        subtitle: `${chDef.year} · ${chDef.subtitle}`
+      });
+    }
+
     // 1. Echter 16-Bit Tiber-Fluss, Küste von Ostia, Ufersteine, Schilf & Holzbrücken
     this.buildRiverAndBridges();
     this.livingWorldManager.initWaterEffects();
@@ -114,6 +128,17 @@ export class WorldScene extends Phaser.Scene {
     this.player = this.add
       .sprite(gameState.playerX, gameState.playerY, texKey, 0)
       .setDepth(gameState.playerY);
+
+    this.companionManager = new CompanionManager(this, {
+      key: 'sdv_dog_lupo',
+      animPrefix: 'dog',
+      name: 'Cerberus',
+      historicalBreed: 'Römischer Wach- & Molosserhund',
+      unlockedChapter: 1
+    });
+    if (gameState.chapter >= 1) {
+      this.companionManager.unlock(gameState.playerX - 24, gameState.playerY);
+    }
 
     // 4. Lebendige Tierwelt (80x80 Ziegen, Rinder, Schmetterlinge & Fische)
     this.wildlifeManager.init(this.mapW, this.mapH);
@@ -180,6 +205,15 @@ export class WorldScene extends Phaser.Scene {
     gameState.playerX = Math.round(this.player.x);
     gameState.playerY = Math.round(this.player.y);
     this.updateQuestCompass();
+
+    const chDef = CHAPTERS.find((c) => c.id === gameState.chapter);
+    if (chDef && this.chapterBanner) {
+      this.chapterBanner.show({
+        chapterNumber: gameState.chapter,
+        title: chDef.title,
+        subtitle: `${chDef.year} · ${chDef.subtitle}`,
+      });
+    }
   }
 
   public getBaseZoom(): number {
@@ -662,12 +696,12 @@ export class WorldScene extends Phaser.Scene {
       const py = ty * 16 + 8;
 
       if (ty % 6 === 0) {
-        this.add.image(leftBankX, py, 'world', 'reed_1').setDepth(py);
-        this.add.image(rightBankX, py + 6, 'world', 'water_rock_1').setDepth(py + 6);
+        this.add.image(leftBankX, py, 'world', 'grass_1').setDepth(py);
+        this.add.image(rightBankX, py + 6, 'world', 'rock_small_a').setDepth(py + 6);
       } else {
-        this.add.image(rightBankX, py, 'world', 'reed_2').setDepth(py);
+        this.add.image(rightBankX, py, 'world', 'grass_2').setDepth(py);
         if (ty % 9 === 0) {
-          this.add.image(leftBankX + 4, py, 'world', 'water_rock_2').setDepth(py);
+          this.add.image(leftBankX + 4, py, 'world', 'rock_small_b').setDepth(py);
         }
       }
     }
@@ -714,26 +748,26 @@ export class WorldScene extends Phaser.Scene {
       this.add.image(px, py, 'world', frame).setDepth(2);
     }
 
-    // Authentic 16-bit deciduous trees ('tree_1', 'tree_2'), bushes ('bush_1', 'bush_2'), and stumps from world_atlas
+    // Authentic 16-bit deciduous trees ('tree_oak_1', 'tree_oak_2'), bushes ('bush_a', 'bush_b'), and stumps from world_atlas
     const forestTrees: Array<[number, number, string]> = [
-      [23, 35, 'tree_1'],
-      [26, 34, 'tree_2'],
-      [35, 45, 'tree_1'],
-      [38, 45, 'tree_2'],
-      [22, 48, 'tree_1'],
-      [30, 56, 'tree_2'],
-      [40, 56, 'tree_1'],
-      [50, 55, 'tree_2'],
-      [58, 48, 'tree_1'],
-      [74, 30, 'tree_2'],
-      [82, 28, 'tree_1'],
-      [86, 35, 'tree_2'],
-      [88, 46, 'tree_1'],
-      [77, 54, 'tree_2'],
-      [27, 22, 'tree_1'],
-      [36, 20, 'tree_2'],
-      [41, 22, 'tree_1'],
-      [83, 18, 'tree_2'],
+      [21, 34, 'tree_oak_1'],
+      [26, 30, 'tree_oak_2'],
+      [34, 44, 'tree_oak_1'],
+      [37, 30, 'tree_oak_2'],
+      [19, 49, 'tree_oak_1'],
+      [30, 58, 'tree_oak_2'],
+      [42, 58, 'tree_oak_1'],
+      [53, 57, 'tree_oak_2'],
+      [58, 49, 'tree_oak_1'],
+      [78, 30, 'tree_oak_2'],
+      [83, 27, 'tree_oak_1'],
+      [90, 33, 'tree_oak_2'],
+      [90, 46, 'tree_oak_1'],
+      [77, 54, 'tree_oak_2'],
+      [27, 22, 'tree_oak_1'],
+      [33, 22, 'tree_oak_2'],
+      [38, 16, 'tree_oak_1'],
+      [83, 18, 'tree_oak_2'],
     ];
     for (const [tx, ty, frame] of forestTrees) {
       const tree = this.add
@@ -743,18 +777,18 @@ export class WorldScene extends Phaser.Scene {
     }
 
     const bushesAndStumps: Array<[number, number, string]> = [
-      [24, 37, 'bush_1'],
-      [29, 44, 'bush_2'],
-      [34, 47, 'stump_a'],
-      [37, 47, 'log_h'],
-      [43, 46, 'bush_1'],
-      [25, 53, 'bush_2'],
-      [49, 43, 'bush_1'],
-      [61, 44, 'bush_2'],
+      [21, 38, 'bush_a'],
+      [28, 46, 'bush_b'],
+      [31, 48, 'stump_a'],
+      [35, 57, 'logs_a'],
+      [46, 45, 'bush_a'],
+      [25, 52, 'bush_b'],
+      [52, 48, 'bush_a'],
+      [60, 44, 'bush_b'],
       [71, 46, 'stump_b'],
-      [79, 36, 'bush_1'],
-      [68, 19, 'bush_2'],
-      [39, 18, 'stump_c'],
+      [80, 36, 'bush_a'],
+      [76, 18, 'bush_b'],
+      [30, 18, 'stump_c'],
     ];
     for (const [tx, ty, frame] of bushesAndStumps) {
       const bImg = this.add
@@ -803,20 +837,21 @@ export class WorldScene extends Phaser.Scene {
     // Authentic 16-bit mossy quarry rocks ('rock_moss_a..k') in the Northern Quarries & Palatine cliffs
     const rockSpots: Array<[number, number, string]> = [
       [21, 45, 'rock_moss_a'],
-      [23, 46, 'rock_moss_b'],
-      [31, 13, 'rock_moss_c'],
-      [33, 14, 'rock_moss_d'],
-      [43, 13, 'rock_moss_e'],
-      [45, 14, 'rock_moss_f'],
-      [61, 13, 'rock_moss_g'],
-      [63, 14, 'rock_moss_h'],
+      [25, 46, 'rock_moss_b'],
+      [30, 13, 'rock_moss_c'],
+      [34, 14, 'rock_moss_d'],
+      [42, 13, 'rock_moss_e'],
+      [46, 14, 'rock_moss_f'],
+      [55, 13, 'rock_moss_g'],
+      [62, 12, 'rock_moss_h'],
       [68, 13, 'rock_moss_i'],
       [74, 13, 'rock_moss_j'],
-      [76, 14, 'rock_moss_k'],
+      [78, 14, 'rock_moss_k'],
     ];
     for (const [tx, ty, frame] of rockSpots) {
       this.add
         .image(tx * 16, ty * 16, 'world', frame)
+        .setScale(0.45)
         .setDepth(ty * 16);
     }
   }
@@ -826,11 +861,10 @@ export class WorldScene extends Phaser.Scene {
   // =========================================================================
   private buildStaticRomanWorld() {
     // 1. Palatine Hill & Lupercal Sanctuary (SW of Forum)
-    this.placeSprite('statue_lupa_lion', 25, 43, 0.9);
-    this.placeSprite('lupa_wolf_sprite', 24, 44.5, 0.9);
-    this.placeSprite('temple_vesta', 31, 39, 0.9);
-    this.placeSprite('brazier_roman_fire', 31, 41, 1);
-    this.livingWorldManager.addTorchGlow(31 * 16, 41 * 16, 32, 0xf97316);
+    this.placeSprite('statue_lupa_lion', 25, 42, 0.85);
+    this.placeSprite('temple_vesta', 30, 37, 1.30);
+    this.placeSprite('brazier_roman_fire', 30, 40.5, 0.75);
+    this.livingWorldManager.addTorchGlow(30 * 16, 40.5 * 16, 32, 0xf97316);
 
     // Animated campfire on the Palatine shepherd clearing (using world_atlas / objects fire)
     const palFire = this.add.sprite(28 * 16, 43 * 16, 'objects', 'fire0').setDepth(43 * 16);
@@ -838,26 +872,26 @@ export class WorldScene extends Phaser.Scene {
     this.livingWorldManager.addTorchGlow(28 * 16, 43 * 16, 36, 0xf59e0b);
 
     // 2. Capitoline Hill & Temple of Jupiter Optimus Maximus (NW of Forum)
-    this.placeSprite('temple_jupiter', 45, 25, 0.95);
-    this.placeSprite('temple_mars', 59, 25, 0.9);
-    this.placeSprite('brazier_roman_fire', 44, 28, 1);
-    this.placeSprite('brazier_roman_fire', 47, 28, 1);
-    this.livingWorldManager.addTorchGlow(44 * 16, 28 * 16, 28);
-    this.livingWorldManager.addTorchGlow(47 * 16, 28 * 16, 28);
+    this.placeSprite('temple_jupiter', 45, 22, 1.25);
+    this.placeSprite('temple_mars', 56, 20, 1.20);
+    this.placeSprite('brazier_roman_fire', 41, 26, 0.75);
+    this.placeSprite('brazier_roman_fire', 48, 26, 0.75);
+    this.livingWorldManager.addTorchGlow(41 * 16, 26 * 16, 28);
+    this.livingWorldManager.addTorchGlow(48 * 16, 26 * 16, 28);
 
     // 3. Forum Romanum Columns, Rostra & Statues
     const forumCols = [46, 50, 56, 60, 64];
     for (const cx of forumCols) {
-      this.placeSprite('column_corinthian', cx, 29, 0.85);
-      this.placeSprite('column_corinthian', cx, 38, 0.85);
+      this.placeSprite('column_corinthian', cx, 29, 0.55);
+      this.placeSprite('column_corinthian', cx, 38, 0.55);
     }
-    this.placeSprite('fountain_marble_large', 52, 34, 0.9);
-    this.placeSprite('statue_senator', 48, 32, 0.9);
-    this.placeSprite('forum_stall_red', 47, 39, 0.85);
-    this.placeSprite('forum_stall_blue', 57, 39, 0.85);
+    this.placeSprite('fountain_marble_large', 53, 34, 0.55);
+    this.placeSprite('statue_senator', 48, 31, 0.85);
+    this.placeSprite('forum_stall_red', 48, 41, 0.85);
+    this.placeSprite('forum_stall_blue', 58, 41, 0.85);
 
     // 4. Agricultural Estates (Villa Rustica, Olive Grove, Vineyard, Spelt Field with real 16-bit soil & 5-stage wheat!)
-    this.placeSprite('villa_rustica', 38, 52, 0.9);
+    this.placeSprite('villa_rustica', 38, 52, 1.0);
     for (let x = 30; x <= 34; x += 1) {
       for (let y = 51; y <= 54; y += 1) {
         this.add.image(x * 16, y * 16, 'farm', 'soil_wet').setDepth(3);
@@ -865,41 +899,41 @@ export class WorldScene extends Phaser.Scene {
         this.add.image(x * 16, y * 16 - 6, 'wheat_stages', stage).setDepth(y * 16);
       }
     }
-    this.placeSprite('olive_grove_tree', 41, 47, 0.95);
-    this.placeSprite('olive_grove_tree', 44, 48, 0.95);
-    this.placeSprite('olive_grove_tree', 42, 50, 0.95);
-    this.placeSprite('vineyard_row', 45, 52, 0.95);
-    this.placeSprite('vineyard_row', 48, 52, 0.95);
+    this.placeSprite('olive_grove_tree', 42, 46, 0.95);
+    this.placeSprite('olive_grove_tree', 46, 48, 0.95);
+    this.placeSprite('olive_grove_tree', 43, 50, 0.95);
+    this.placeSprite('vineyard_row', 45, 53, 0.95);
+    this.placeSprite('vineyard_row', 49, 53, 0.95);
 
     // 5. Harbor of Ostia & Tiber Shipping (SW)
     this.placeSprite('dock_pier', 17, 58, 1);
     this.placeSprite('roman_galley_ship', 12, 59, 0.95);
-    this.placeSprite('roman_horreum', 22, 56, 0.85);
-    this.placeSprite('roman_amphora_group', 20, 57, 0.9);
-    this.placeSprite('roman_cart_goods', 23, 59, 0.9);
+    this.placeSprite('roman_horreum', 25, 56, 1.30);
+    this.placeSprite('roman_amphora_group', 20, 56, 0.45);
+    this.placeSprite('roman_cart_goods', 25, 60, 0.75);
 
     // 6. Northern Quarries & Mines (Anvil & Forge glow)
-    this.placeSprite('forge_anvil', 61, 14, 0.95);
-    this.livingWorldManager.addTorchGlow(61 * 16, 14 * 16, 26, 0xef4444);
+    this.placeSprite('forge_anvil', 59, 14, 0.55);
+    this.livingWorldManager.addTorchGlow(59 * 16, 14 * 16, 26, 0xef4444);
 
     // 7. Roman Cypresses & Milestones along Via Appia & Via Sacra
     const cypressSpots = [
-      { x: 28, y: 37 },
+      { x: 26, y: 37 },
       { x: 40, y: 37 },
       { x: 63, y: 42 },
       { x: 67, y: 46 },
       { x: 63, y: 50 },
       { x: 67, y: 54 },
-      { x: 78, y: 34 },
-      { x: 85, y: 38 },
+      { x: 82, y: 34 },
+      { x: 88, y: 38 },
       { x: 44, y: 31 },
-      { x: 65, y: 31 },
+      { x: 67, y: 30 },
     ];
     cypressSpots.forEach((sp, idx) => {
       this.placeSprite(idx % 2 === 0 ? 'cypress_roman_1' : 'cypress_roman_2', sp.x, sp.y, 0.95);
     });
-    this.placeSprite('roman_milestone', 43, 40, 0.9);
-    this.placeSprite('roman_milestone', 65, 45, 0.9);
+    this.placeSprite('roman_milestone', 44, 40, 0.75);
+    this.placeSprite('roman_milestone', 65, 45, 0.75);
   }
 
   private placeSprite(key: string, tx: number, ty: number, scale = 1): Phaser.GameObjects.Image {
@@ -1116,13 +1150,13 @@ export class WorldScene extends Phaser.Scene {
 
     // 4. CHAPTER-GATED SETTLEMENT BUILDINGS & EPOCH ARCHITECTURE
     const buildingCoords: Record<string, { x: number; y: number; sprite: string; scale: number }> = {
-      vesta_herd: { x: 33, y: 40, sprite: 'roman_horreum', scale: 0.85 },
-      curia_senat: { x: 54, y: 28, sprite: 'curia_senate', scale: 0.9 },
-      legion_schmiede: { x: 66, y: 21, sprite: 'praetorium_tent', scale: 0.9 },
-      ostia_werft: { x: 19, y: 55, sprite: 'roman_galley_ship', scale: 0.9 },
-      aqua_romana: { x: 62, y: 33, sprite: 'aqueduct_bridge', scale: 0.85 },
-      kolosseum_bau: { x: 71, y: 36, sprite: 'colosseum_arena', scale: 0.85 },
-      basilika_bau: { x: 83, y: 40, sprite: 'basilica_constantine', scale: 0.9 },
+      vesta_herd: { x: 35, y: 38, sprite: 'roman_horreum', scale: 1.30 },
+      curia_senat: { x: 53, y: 27, sprite: 'curia_senate', scale: 1.25 },
+      legion_schmiede: { x: 68, y: 20, sprite: 'praetorium_tent', scale: 1.10 },
+      ostia_werft: { x: 18, y: 54, sprite: 'roman_galley_ship', scale: 0.95 },
+      aqua_romana: { x: 63, y: 34, sprite: 'aqueduct_bridge', scale: 1.15 },
+      kolosseum_bau: { x: 73, y: 36, sprite: 'colosseum_arena', scale: 0.95 },
+      basilika_bau: { x: 83, y: 41, sprite: 'basilica_constantine', scale: 1.15 },
     };
 
     for (const b of BUILDINGS) {
@@ -1138,10 +1172,10 @@ export class WorldScene extends Phaser.Scene {
 
         if (b.id === 'legion_schmiede') {
           this.dynamicGroup.add(
-            this.add.image((bc.x - 3) * 16, (bc.y + 1) * 16, 'legion_tent_red').setDepth((bc.y + 1) * 16),
+            this.add.image((bc.x - 6) * 16, (bc.y + 1) * 16, 'legion_tent_red').setDepth((bc.y + 1) * 16),
           );
           this.dynamicGroup.add(
-            this.add.image((bc.x + 3) * 16, (bc.y + 1) * 16, 'legion_aquila_banner').setDepth((bc.y + 1) * 16),
+            this.add.image((bc.x + 4) * 16, (bc.y + 1) * 16, 'legion_aquila_banner').setDepth((bc.y + 1) * 16),
           );
         }
       } else if (b.minChapter <= ch) {
@@ -1165,41 +1199,41 @@ export class WorldScene extends Phaser.Scene {
     // Epoch-specific visual landmarks
     if (ch >= 4) {
       this.dynamicGroup.add(
-        this.add.image(61 * 16, 21 * 16, 'roman_catapult').setScale(0.85).setDepth(21 * 16),
+        this.add.image(63 * 16, 16 * 16, 'roman_catapult').setScale(0.75).setDepth(16 * 16),
       );
       if (ch === 4) {
         this.dynamicGroup.add(
-          this.add.image(59 * 16, 23 * 16, 'hannibal_elephant_sprite').setScale(0.9).setDepth(23 * 16),
+          this.add.image(50 * 16, 20 * 16, 'hannibal_elephant_sprite').setScale(0.9).setDepth(20 * 16),
         );
       }
     }
     if (ch >= 6) {
       this.dynamicGroup.add(
-        this.add.image(67 * 16, 39 * 16, 'gladiator_weapon_rack').setDepth(39 * 16),
+        this.add.image(66 * 16, 39 * 16, 'gladiator_weapon_rack').setScale(0.75).setDepth(39 * 16),
       );
       this.dynamicGroup.add(
-        this.add.image(69 * 16, 39 * 16, 'statue_gladiator').setDepth(39 * 16),
+        this.add.image(69 * 16, 40 * 16, 'statue_gladiator').setScale(0.85).setDepth(40 * 16),
       );
     }
     if (ch >= 7) {
       this.dynamicGroup.add(
-        this.add.image(52 * 16, 39 * 16, 'triumphal_arch').setScale(0.85).setDepth(39 * 16),
+        this.add.image(53 * 16, 43 * 16, 'triumphal_arch').setScale(1.05).setDepth(43 * 16),
       );
     }
     if (ch >= 8) {
       this.dynamicGroup.add(
-        this.add.image(69 * 16, 28 * 16, 'pantheon_front').setScale(0.85).setDepth(28 * 16),
+        this.add.image(71 * 16, 28 * 16, 'pantheon_front').setScale(0.95).setDepth(28 * 16),
       );
       this.dynamicGroup.add(
-        this.add.image(71 * 16, 22 * 16, 'ara_pacis_altar').setScale(0.85).setDepth(22 * 16),
+        this.add.image(75 * 16, 22 * 16, 'ara_pacis_altar').setScale(0.50).setDepth(22 * 16),
       );
     }
     if (ch === 12) {
       this.dynamicGroup.add(
-        this.add.image(49 * 16, 36 * 16, 'ruined_column_fallen').setDepth(36 * 16),
+        this.add.image(43 * 16, 35 * 16, 'ruined_column_fallen').setDepth(35 * 16),
       );
       this.dynamicGroup.add(
-        this.add.image(58 * 16, 36 * 16, 'ruined_arch_476').setScale(0.85).setDepth(36 * 16),
+        this.add.image(57 * 16, 33 * 16, 'ruined_arch_476').setScale(1.05).setDepth(33 * 16),
       );
     }
 
@@ -1220,7 +1254,7 @@ export class WorldScene extends Phaser.Scene {
         stationType: 'epigraphy',
         name: 'Inschriften-Station (Epigraphik)',
         sub: '[E] Steinmetz-Inschrift säubern & SPQR enträtseln',
-        tx: 49,
+        tx: 47,
         ty: 34,
         minChapter: 2,
         spriteFrame: 'gravestone',
@@ -1231,8 +1265,8 @@ export class WorldScene extends Phaser.Scene {
         stationType: 'scale',
         name: 'Horreum-Waage (Statera)',
         sub: '[E] Getreide abwiegen mit römischen Gewichten',
-        tx: 23,
-        ty: 56,
+        tx: 21,
+        ty: 53,
         minChapter: 3,
         spriteFrame: 'campfire',
         auraColor: 0xf59e0b,
@@ -1242,8 +1276,8 @@ export class WorldScene extends Phaser.Scene {
         stationType: 'senate',
         name: 'Senats-Wachstafel (Tabella)',
         sub: '[E] In der Curia abstimmen (Ackergesetz Gracchus)',
-        tx: 56,
-        ty: 28,
+        tx: 58,
+        ty: 26.5,
         minChapter: 5,
         spriteFrame: 'totem',
         auraColor: 0xa855f7,
@@ -1253,8 +1287,8 @@ export class WorldScene extends Phaser.Scene {
         stationType: 'aqueduct',
         name: 'Aquädukt-Wasserbau (Pfeiler)',
         sub: '[E] Wasserleitung durch Rohrdrehung verbinden',
-        tx: 64,
-        ty: 31,
+        tx: 62,
+        ty: 30,
         minChapter: 6,
         spriteFrame: 'stone_arch_a',
         auraColor: 0x06b6d4,
@@ -1264,7 +1298,7 @@ export class WorldScene extends Phaser.Scene {
         stationType: 'sundial',
         name: 'Solarium Augusti (Sonnenuhr)',
         sub: '[E] Obeliskenschatten auf Hora Sexta drehen',
-        tx: 70,
+        tx: 71,
         ty: 24,
         minChapter: 8,
         spriteFrame: 'stone_ring',
@@ -1276,7 +1310,7 @@ export class WorldScene extends Phaser.Scene {
       if (st.minChapter <= ch) {
         const marker = this.add
           .image(st.tx * 16, st.ty * 16, 'world', st.spriteFrame)
-          .setScale(0.85)
+          .setScale(0.42)
           .setDepth(st.ty * 16);
         const aura = this.add
           .circle(st.tx * 16, st.ty * 16, 14, st.auraColor, 0.28)
@@ -1322,7 +1356,7 @@ export class WorldScene extends Phaser.Scene {
         artifactId: 'denar',
         name: 'Römischer Silberdenar',
         sub: '[E] Münze im 360°-Inspektor untersuchen',
-        tx: 53,
+        tx: 54,
         ty: 36,
         minChapter: 2,
       },
@@ -1331,8 +1365,8 @@ export class WorldScene extends Phaser.Scene {
         artifactId: 'scutum',
         name: 'Legionärsschild (Scutum)',
         sub: '[E] Schild im 360°-Inspektor untersuchen',
-        tx: 66,
-        ty: 24,
+        tx: 67,
+        ty: 25,
         minChapter: 4,
       },
       {
@@ -1340,8 +1374,8 @@ export class WorldScene extends Phaser.Scene {
         artifactId: 'tabella',
         name: 'Wachstafel & Stilus',
         sub: '[E] Schreibtafel im 360°-Inspektor untersuchen',
-        tx: 51,
-        ty: 30,
+        tx: 48,
+        ty: 29,
         minChapter: 5,
       },
       {
@@ -1349,7 +1383,7 @@ export class WorldScene extends Phaser.Scene {
         artifactId: 'lucerna',
         name: 'Römische Ton-Öllampe',
         sub: '[E] Lucerna im 360°-Inspektor untersuchen',
-        tx: 80,
+        tx: 78,
         ty: 46,
         minChapter: 9,
       },
@@ -1358,8 +1392,8 @@ export class WorldScene extends Phaser.Scene {
         artifactId: 'codex',
         name: 'Spätantiker Pergament-Codex',
         sub: '[E] Manuskript im 360°-Inspektor untersuchen',
-        tx: 56,
-        ty: 36,
+        tx: 62,
+        ty: 37,
         minChapter: 11,
       },
     ];
@@ -1368,7 +1402,7 @@ export class WorldScene extends Phaser.Scene {
       if (art.minChapter <= ch) {
         const ped = this.add
           .image(art.tx * 16, art.ty * 16, 'world', 'stone_ring')
-          .setScale(0.65)
+          .setScale(0.32)
           .setDepth(art.ty * 16);
         const glow = this.add
           .circle(art.tx * 16, art.ty * 16, 12, 0xfbbf24, 0.3)
@@ -1405,7 +1439,18 @@ export class WorldScene extends Phaser.Scene {
   // =========================================================================
   private handleAction() {
     const ui = this.scene.get('UI') as UIScene;
-    if (!this.activeTarget || ui.isModalOpen()) return;
+    if (ui.isModalOpen()) return;
+
+    if (!this.activeTarget) {
+      if (this.companionManager?.isAvailable()) {
+        const dogDist = this.companionManager.getDistanceTo(this.player.x, this.player.y);
+        if (dogDist < 42) {
+          this.companionManager.pet();
+          return;
+        }
+      }
+      return;
+    }
 
     const t = this.activeTarget;
 
@@ -1536,6 +1581,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.livingWorldManager.update(delta, this.player.x, this.player.y, len > 0);
     this.wildlifeManager.update(time, delta, this.player.x, this.player.y);
+    this.companionManager?.update(this.player, this.targets, delta);
     this.atmosphereManager.update(delta);
     const canvas = this.game.canvas;
     if (canvas) {
@@ -1654,7 +1700,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    // 3. Single-Proximity Action Pill (< 46px)
+    // 3. Single-Proximity Action Pill (< 46px) or Companion Dog Petting (< 42px)
     if (this.activeTarget) {
       const tPos = toScreen(this.activeTarget.x, this.activeTarget.y - 24);
       pills.push(`
@@ -1663,6 +1709,18 @@ export class WorldScene extends Phaser.Scene {
           <div class="world-dom-label-sub">${this.escapeHtml(this.activeTarget.sub)}</div>
         </div>
       `);
+    } else if (this.companionManager?.isAvailable()) {
+      const dogDist = this.companionManager.getDistanceTo(this.player.x, this.player.y);
+      const dogSpr = this.companionManager.getSprite();
+      if (dogDist < 42 && dogSpr) {
+        const dPos = toScreen(dogSpr.x, dogSpr.y - 22);
+        pills.push(`
+          <div class="world-dom-label" style="left:${Math.round(dPos.sx)}px;top:${Math.round(dPos.sy)}px;">
+            <div class="world-dom-label-title">🐕 Cerberus</div>
+            <div class="world-dom-label-sub">[E] / Klick: Römischen Wachhund streicheln</div>
+          </div>
+        `);
+      }
     }
 
     this.labelLayer.innerHTML = pills.join('');

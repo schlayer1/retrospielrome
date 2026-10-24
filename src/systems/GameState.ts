@@ -66,6 +66,8 @@ export class GameState {
   public role: PlayerRole = 'legionary';
   public playerName = 'Titus Valerius';
   public playTimeSeconds = 0;
+  public storyFlags: Record<string, boolean> = {};
+  public dilemmaSummary = '';
   public malePreviewUrl = '';
   public femalePreviewUrl = '';
 

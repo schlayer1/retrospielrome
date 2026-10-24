@@ -7,6 +7,9 @@ import { gameState, ROM_ROLES } from '../systems/GameState';
 import { PlayerGender, PlayerRole } from '../systems/SaveManager';
 import { TouchControls } from '../ui/TouchControls';
 import { WorldScene } from './WorldScene';
+import { PrintSheetManager } from '../ui/PrintSheet';
+import { DilemmaModal } from '../ui/DilemmaModal';
+import { ROMAN_DILEMMAS } from '../data/dilemmas';
 
 export const cleanTitle = (t: string): string =>
   t.replace(/^Kapitel\s*\d+\s*:\s*/i, '');
@@ -25,6 +28,7 @@ export type ModalType =
   | 'epochs'
   | 'certificate'
   | 'pause'
+  | 'dilemma'
   | 'relic';
 
 export class UIScene extends Phaser.Scene {
@@ -35,6 +39,7 @@ export class UIScene extends Phaser.Scene {
   private questBox!: HTMLDivElement;
   private modalOverlay!: HTMLDivElement;
   private toastContainer!: HTMLDivElement;
+  private dilemmaModal = new DilemmaModal();
 
   private craftCategoryFilter: 'all' | 'economy' | 'republic' | 'empire' = 'all';
   private lexiconSearch = '';
@@ -197,6 +202,9 @@ export class UIScene extends Phaser.Scene {
       case 'U':
         this.toggleModal('certificate');
         break;
+      case 'R':
+        this.openDilemma();
+        break;
       case 'P':
         this.toggleModal('pause');
         break;
@@ -298,6 +306,7 @@ export class UIScene extends Phaser.Scene {
         <button class="hud-btn ${this.activeModal === 'lexicon' ? 'active' : ''}" data-modal="lexicon" title="Römisches Lexikon [L]">📖 <span class="hud-btn-label">Lexikon [L]</span></button>
         <button class="hud-btn ${this.activeModal === 'epochs' ? 'active' : ''}" data-modal="epochs" title="Epochenvergleich [Z]">⏳ <span class="hud-btn-label">Epochen [Z]</span></button>
         <button class="hud-btn ${this.activeModal === 'certificate' ? 'active' : ''}" data-modal="certificate" title="A4-Urkunde [U]">📜 <span class="hud-btn-label">Urkunde [U]</span></button>
+        <button class="hud-btn ${this.activeModal === 'dilemma' ? 'active' : ''}" data-modal="dilemma" title="Senat & Ratsbeschluss [R]">⚖️ <span class="hud-btn-label">Senat [R]</span></button>
         <button class="hud-btn ${this.activeModal === 'pause' ? 'active' : ''}" data-modal="pause" title="Pause & Klassen-Code [P]">⚙️ <span class="hud-btn-label">Pause [P]</span></button>
       </div>
     `;
@@ -1062,6 +1071,9 @@ export class UIScene extends Phaser.Scene {
       case 'certificate':
         this.renderCertificateModal();
         break;
+      case 'dilemma':
+        this.openDilemma();
+        break;
       case 'pause':
         this.renderPauseModal();
         break;
@@ -1664,7 +1676,7 @@ export class UIScene extends Phaser.Scene {
     this.modalOverlay
       .querySelector('#cert-print-btn')
       ?.addEventListener('click', () => {
-        window.print();
+        this.triggerHefterPrint();
       });
   }
 
@@ -1779,6 +1791,9 @@ export class UIScene extends Phaser.Scene {
             <button id="cycle-role-btn" class="secondary-roman-btn">
               ⭐ Rolle wechseln (${gameState.getRoleDef().name})
             </button>
+            <button id="pause-print-sheet-btn" class="secondary-roman-btn" style="background:#047857;border-color:#065f46;color:#fff;font-weight:800;">
+              🖨️ Hefterblatt drucken (A4)
+            </button>
             <button id="reset-game-btn" class="danger-roman-btn">
               ⚠️ Spielstand zurücksetzen
             </button>
@@ -1806,6 +1821,10 @@ export class UIScene extends Phaser.Scene {
 
     this.modalOverlay.querySelector('#pause-open-build-btn')?.addEventListener('click', () => {
       this.toggleModal('build');
+    });
+
+    this.modalOverlay.querySelector('#pause-print-sheet-btn')?.addEventListener('click', () => {
+      this.triggerHefterPrint();
     });
 
     this.modalOverlay.querySelector('#import-code-btn')?.addEventListener('click', () => {
@@ -1886,6 +1905,43 @@ export class UIScene extends Phaser.Scene {
       const world = this.scene.get('World') as WorldScene;
       if (world) world.onChapterChanged();
       this.openStartScreen();
+    });
+  }
+
+  public triggerHefterPrint(): void {
+    const relicsData = ROMAN_RELICS.map((r) => ({
+      title: r.name,
+      note: r.significance || r.historicalContext || 'Bedeutendes archäologisches Relikt der römischen Antike.'
+    }));
+    const keyTerms = Object.values(LEXICON).slice(0, 3).map((t) => ({
+      term: t.term,
+      definition: t.merksatz ? `${t.definition} (📌 ${t.merksatz})` : t.definition
+    }));
+    const rankInfo = gameState.getCertificateRank();
+    PrintSheetManager.triggerPrint({
+      schoolName: 'Staatliche Regelschule Heimbürgeschule Kahla',
+      epochTitle: 'Das Römische Reich: Von den Sieben Hügeln zur Weltmetropole',
+      playerName: gameState.playerName,
+      hefterCode: gameState.exportShortcode(),
+      rankTitle: `${rankInfo.title} (${rankInfo.rank} · ${gameState.discoveredRelics.size}/5 Relikte geborgen)`,
+      relics: relicsData,
+      dilemmaSummary: gameState.dilemmaSummary || undefined,
+      keyTerms
+    });
+  }
+
+  public openDilemma(): void {
+    const d = ROMAN_DILEMMAS[0];
+    if (!d) return;
+    this.activeModal = 'dilemma';
+    this.dilemmaModal.open(d, (opt) => {
+      gameState.storyFlags[opt.storyFlag] = true;
+      gameState.dilemmaSummary = `${d.conflictTitle}: ${opt.title} – ${opt.argumentText}`;
+      for (const [k, v] of Object.entries(opt.rewards)) {
+        gameState.addItem(k as RomanItemId, v);
+      }
+      this.showToast(`⚖️ Senatsbeschluss ratifiziert: ${opt.title}`);
+      this.closeModal();
     });
   }
 }

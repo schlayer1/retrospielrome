@@ -296,6 +296,7 @@ export class BootScene extends Phaser.Scene {
       this.anims.create({ key: 'dog-sit', frames: [{ key: 'sdv_dog_lupo', frame: 16 }], frameRate: 1 });
       this.anims.create({ key: 'dog-lay', frames: [{ key: 'sdv_dog_lupo', frame: 20 }], frameRate: 1 });
       this.anims.create({ key: 'dog-wag', frames: this.anims.generateFrameNumbers('sdv_dog_lupo', { start: 16, end: 19 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'dog-sniff', frames: this.anims.generateFrameNumbers('sdv_dog_lupo', { start: 12, end: 15 }), frameRate: 4, repeat: -1 });
 
       // Feldhase (sdv_rabbit)
       this.anims.create({ key: 'rabbit-idle', frames: [{ key: 'sdv_rabbit', frame: 4 }], frameRate: 1 });

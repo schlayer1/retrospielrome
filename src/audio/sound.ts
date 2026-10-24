@@ -244,6 +244,12 @@ class SoundSystem {
     this.playTone(165, 0.2, 'sawtooth', 0.08, 0.12);
   }
 
+  public pet() {
+    this.playTone(392.0, 0.07, 'sine', 0.08, 0);
+    this.playTone(523.25, 0.09, 'sine', 0.09, 0.06);
+    this.playTone(659.25, 0.14, 'triangle', 0.09, 0.13);
+  }
+
   public step(surface: GroundSurface = 'stone') {
     if (this.muted) return;
     const ctx = this.getContext();

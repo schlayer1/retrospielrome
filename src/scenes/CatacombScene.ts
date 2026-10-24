@@ -124,19 +124,19 @@ export class CatacombScene extends Phaser.Scene {
     // Left Crypt: Early Christian Catacomb (Ichthys & Sarcophagi)
     this.add.image(9 * 16, 11 * 16, 'marble_sarcophagus').setDepth(11 * 16);
     this.add.image(14 * 16, 11 * 16, 'marble_sarcophagus').setDepth(11 * 16);
-    this.add.image(11.5 * 16, 11.5 * 16, 'ara_pacis_altar').setScale(0.75).setDepth(11.5 * 16);
+    this.add.image(11.5 * 16, 11.5 * 16, 'ara_pacis_altar').setScale(0.50).setDepth(11.5 * 16);
     this.add.image(10 * 16, 13 * 16, 'catacomb_lantern').setDepth(13 * 16);
     this.add.image(13 * 16, 13 * 16, 'catacomb_lantern').setDepth(13 * 16);
 
     // Right Crypt: Roman Soldiers' Mithraeum (Mithras Sanctuary)
     this.add.image(29.5 * 16, 11.5 * 16, 'statue_emperor').setDepth(11.5 * 16);
-    this.add.image(27 * 16, 12 * 16, 'brazier_roman_fire').setDepth(12 * 16);
-    this.add.image(32 * 16, 12 * 16, 'brazier_roman_fire').setDepth(12 * 16);
+    this.add.image(27 * 16, 12 * 16, 'brazier_roman_fire').setScale(0.75).setDepth(12 * 16);
+    this.add.image(32 * 16, 12 * 16, 'brazier_roman_fire').setScale(0.75).setDepth(12 * 16);
     this.add.image(26 * 16, 10 * 16, 'column_red_porphyry').setScale(0.75).setDepth(10 * 16);
     this.add.image(33 * 16, 10 * 16, 'column_red_porphyry').setScale(0.75).setDepth(10 * 16);
 
     // Center North: Ancient Scroll & Oil Niche
-    this.add.image(20 * 16, 9 * 16, 'roman_amphora_group').setDepth(9 * 16);
+    this.add.image(20 * 16, 9 * 16, 'roman_amphora_group').setScale(0.45).setDepth(9 * 16);
 
     // Warm torchlight glows
     const torchCoords = [

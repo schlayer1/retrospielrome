@@ -29,7 +29,7 @@ export const ROMAN_RELICS: RomanRelic[] = [
     findLocation: 'Lupercal-Höhle am Fuß des Palatin-Hügels',
     icon: '/assets/icons/relic_lupa.png',
     x: 24,
-    y: 44,
+    y: 39,
     minChapter: 1,
     historicalContext:
       'Die berühmte Bronzefigur zeigt die Wölfin (Lupa), die der Sage nach die ausgesetzten Zwillingsbrüder Romulus und Remus am Ufer des Tiber säugte. Als Söhne des Kriegsgottes Mars sollten sie durch den grausamen König Amulius ertränkt werden, doch eine Wölfin und ein Specht retteten sie, bevor der Hirte Faustulus sie aufzog.',
@@ -51,7 +51,7 @@ export const ROMAN_RELICS: RomanRelic[] = [
     findLocation: 'Rednertribüne (Rostra) auf dem Forum Romanum',
     icon: '/assets/icons/relic_zwoelftafel.png',
     x: 49,
-    y: 38,
+    y: 34,
     minChapter: 3,
     historicalContext:
       'In der frühen Republik kannten nur die adligen Patrizier die ungeschriebenen Gesetze und legten sie oft willkürlich gegen die einfachen Plebejer aus. Erst durch den Streik der Plebejer (Auszug auf den Heiligen Berg) erzwang das Volk 450 v. Chr., dass das Recht auf zwölf Bronzetafeln öffentlich sichtbar auf dem Forum Romanum aufgestellt wurde.',
@@ -72,8 +72,8 @@ export const ROMAN_RELICS: RomanRelic[] = [
     year: '44 v. Chr.',
     findLocation: 'Stufen der Curia Iulia am Senatsplatz',
     icon: '/assets/icons/relic_caesar_denar.png',
-    x: 61,
-    y: 28,
+    x: 58,
+    y: 29,
     minChapter: 7,
     historicalContext:
       'Wenige Wochen vor seiner Ermordung an den Iden des März (15. März 44 v. Chr.) ließ Gaius Iulius Caesar Silbermünzen mit seinem eigenen Porträt und dem Titel „DICTATOR PERPETUO" (Diktator auf Lebenszeit) prägen. Zuvor durften auf römischen Münzen nur Götter und längst verstorbene Vorfahren abgebildet werden.',
@@ -94,8 +94,8 @@ export const ROMAN_RELICS: RomanRelic[] = [
     year: 'ca. 20 v. Chr.',
     findLocation: 'Friedensaltar (Ara Pacis) auf dem Marsfeld',
     icon: '/assets/icons/relic_augustus_statue.png',
-    x: 72,
-    y: 22,
+    x: 76,
+    y: 25,
     minChapter: 8,
     historicalContext:
       'Die berühmte Panzerstatue zeigt den ersten Kaiser Augustus in Feldherrenpose als Friedensbringer. Auf seinem Brustpanzer ist die friedliche Rückgabe der römischen Legionsadler durch die Parther dargestellt, während zu seinen Füßen der kleine Liebesgott Amor auf einem Delfin reitet – ein Hinweis auf die Göttin Venus als Stammutter der julischen Familie.',
@@ -117,7 +117,7 @@ export const ROMAN_RELICS: RomanRelic[] = [
     findLocation: 'Konstantinsbasilika & Katakomben-Zugang',
     icon: '/assets/icons/relic_konstantin_medaillon.png',
     x: 86,
-    y: 46,
+    y: 49,
     minChapter: 11,
     historicalContext:
       'Vor der Entscheidungsschlacht an der Milvischen Brücke (312 n. Chr.) vor den Toren Roms ließ Kaiser Konstantin das frühchristliche Zeichen Chi-Rho (die verschlungenen griechischen Anfangsbuchstaben Χ und Ρ für „Christus") auf die Schilde seiner Legionäre malen – unter der Losung „In hoc signo vinces" (In diesem Zeichen wirst du siegen).',
